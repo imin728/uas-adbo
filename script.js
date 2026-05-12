@@ -99,7 +99,26 @@ function pilihJenis(val) {
     .join("");
 }
 function kirimPermohonan() {
-  showPP("sukses");
+  // 1. Cek apakah captcha sudah dicentang
+  if (!document.getElementById("captcha").checked) {
+    alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
+    return;
+  }
+
+  // 2. Tampilkan efek loading pada tombol
+  const btn = event.target;
+  const teksAsli = btn.innerText;
+  btn.disabled = true;
+  btn.innerText = "Sedang mengirim... Mohon tunggu";
+
+  // 3. Beri delay (simulasi pengiriman data selama 2 detik)
+  setTimeout(function () {
+    btn.disabled = false;
+    btn.innerText = teksAsli;
+
+    // Pindah ke halaman sukses
+    showPP("sukses");
+  }, 2000);
 }
 function keRiwayatP() {
   showPP("dashboard");
