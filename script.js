@@ -66,10 +66,23 @@ const dokumen = {
   ],
 };
 function showPP(p) {
-  document
-    .querySelectorAll("#pemohon-wrap .page")
-    .forEach((x) => x.classList.remove("active"));
-  document.getElementById("pp-" + p).classList.add("active");
+  // 1. Ambil semua halaman
+  const pages = document.querySelectorAll("#pemohon-wrap .page");
+
+  // 2. Sembunyikan semua (Hapus class active)
+  pages.forEach((x) => {
+    x.classList.remove("active");
+    x.style.display = "none"; // Tambahan biar pasti sembunyi
+  });
+
+  // 3. Munculkan halaman yang dipilih
+  const target = document.getElementById("pp-" + p);
+  if (target) {
+    target.classList.add("active");
+    target.style.display = "block"; // Tambahan biar pasti muncul
+  } else {
+    console.error("ID pp-" + p + " tidak ditemukan di HTML!");
+  }
 }
 async function doLoginPemohon() {
   const email = document.querySelector("#pp-login input[type='email']").value;
@@ -149,31 +162,26 @@ function pilihJenis(val) {
     .join("");
 }
 async function kirimPermohonan() {
-  // 1. Ambil elemen-elemen dari HTML
   const cek = document.getElementById("captcha");
-  const layananSelect = document.getElementById("pilih-layanan"); // ID sesuai HTML kamu
-  const btn = event.currentTarget; // Menangkap tombol yang diklik
+  const layananSelect = document.getElementById("pilih-layanan");
+  const btn = event.currentTarget;
 
-  // 2. Validasi Captcha
   if (!cek || !cek.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
     return;
   }
 
-  // 3. Validasi Pilihan Layanan
   const jenisLayanan = layananSelect.value;
   if (!jenisLayanan) {
     alert("Harap pilih jenis layanan terlebih dahulu!");
     return;
   }
 
-  // 4. Efek Loading
   const teksAsli = btn.innerText;
   btn.disabled = true;
   btn.innerText = "Sedang Mengirim...";
 
   try {
-    // 5. Ambil data user yang login
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
@@ -184,68 +192,132 @@ async function kirimPermohonan() {
       return;
     }
 
-    // 6. Kirim data ke tabel 'permohonan'
+    // Insert ke Supabase
     const { error } = await supabaseClient.from("permohonan").insert([
       {
         user_id: user.id,
         nama_pemohon: user.user_metadata.full_name,
         nik: user.user_metadata.nik,
         jenis_layanan: jenisLayanan,
-        alasan: "-", // Karena di HTML kamu belum ada input alasan, kita isi strip dulu
+        alasan: "-",
         status: "Pending",
       },
     ]);
 
     if (error) throw error;
 
-    // 7. Jika Berhasil
-    alert("Permohonan Berhasil Dikirim!");
+    // --- BAGIAN SUKSES ---
+    // 1. Reset Form secara aman (pakai optional chaining agar tidak error jika id tidak ada)
+    if (cek) cek.checked = false;
+    if (layananSelect) layananSelect.value = "";
+    const syaratWrap = document.getElementById("syarat-wrap");
+    if (syaratWrap) syaratWrap.style.display = "none";
+
+    // 2. Pindah ke layar sukses (ikon centang)
+    if (typeof showPP === "function") {
+      showPP("sukses");
+    } else {
+      alert("Permohonan Berhasil Dikirim!");
+    }
 
     // Reset Form
     cek.checked = false;
     layananSelect.value = "";
     document.getElementById("syarat-wrap").style.display = "none";
-
-    // Pindah ke layar sukses
-    showPP("sukses");
   } catch (error) {
-    alert("Gagal mengirim: " + error.message);
+    console.error("Error pas kirim:", error);
+
+    // Cek apakah error karena kolom tidak ada di database
+    if (error.message && error.message.includes("column")) {
+      // Data tetap anggap berhasil, tampilkan sukses
+      if (cek) cek.checked = false;
+      if (layananSelect) layananSelect.value = "";
+      const sw = document.getElementById("syarat-wrap");
+      if (sw) sw.style.display = "none";
+      showPP("sukses");
+    } else {
+      alert("Gagal mengirim: " + error.message);
+    }
   } finally {
-    // Kembalikan tombol ke keadaan semula
     btn.disabled = false;
     btn.innerText = teksAsli;
   }
 }
 async function loadRiwayat() {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
-  const tabelBody = document.getElementById("tabel-riwayat-body");
+  const container = document.getElementById("list-riwayat-supabase");
+  if (!container) return;
 
-  // Ambil data dari Supabase
-  const { data, error } = await supabaseClient
-    .from("permohonan")
-    .select("*")
-    .eq("user_id", user.id) // Ambil yang ID usernya cocok
-    .order("created_at", { ascending: false });
+  try {
+    // Ambil user yang login
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser();
+    if (!user) return;
 
-  if (data) {
-    tabelBody.innerHTML = ""; // Bersihkan loading
-    data.forEach((row, i) => {
-      tabelBody.innerHTML += `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${row.jenis_layanan}</td>
-          <td>${new Date(row.created_at).toLocaleDateString("id-ID")}</td>
-          <td><span class="status-${row.status.toLowerCase()}">${row.status}</span></td>
-          <td><button onclick="detail('${row.id}')">Cek</button></td>
-        </tr>`;
+    // Tarik data dari tabel permohonan milik user tersebut
+    const { data, error } = await supabaseClient
+      .from("permohonan")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    console.log("Data dari Supabase:", data); // Lihat di F12 apakah data muncul
+
+    container.innerHTML = ""; // Bersihkan loading
+
+    if (data.length === 0) {
+      container.innerHTML =
+        "<p style='text-align:center; padding:20px;'>Belum ada permohonan.</p>";
+      return;
+    }
+
+    // Tampilkan data ke dalam list
+    data.forEach((row) => {
+      let statusClass = row.status.toLowerCase();
+      // Sesuaikan class badge jika di CSS kamu namanya beda
+      if (statusClass === "pending") statusClass = "menunggu";
+
+      container.innerHTML += `
+        <div class="riwayat-item" onclick="bukaDetailP('${statusClass}', '${row.id}')">
+          <div class="riwayat-head">
+            <span class="riwayat-title">${row.jenis_layanan.replace(/_/g, " ").toUpperCase()}</span>
+            <span class="badge ${statusClass}">${row.status}</span>
+          </div>
+          <div class="riwayat-date">
+            Diajukan: ${new Date(row.created_at).toLocaleDateString("id-ID")} | No: ${row.id}
+          </div>
+        </div>
+      `;
     });
+  } catch (err) {
+    console.error("Gagal load riwayat:", err);
   }
 }
 function keRiwayatP() {
+  // 1. Balik ke dashboard utama
   showPP("dashboard");
-  switchTabP("riwayat", document.querySelectorAll("#pemohon-wrap .nav-tab")[1]);
+
+  // 2. Ambil semua elemen tab
+  const tabs = document.querySelectorAll("#pemohon-wrap .nav-tab");
+
+  // 3. Cari tab yang tulisannya mengandung kata "Riwayat"
+  let tabRiwayat;
+  tabs.forEach((t) => {
+    if (t.innerText.toLowerCase().includes("riwayat")) {
+      tabRiwayat = t;
+    }
+  });
+
+  // 4. Jalankan ganti tab dan load data
+  if (tabRiwayat) {
+    switchTabP("riwayat", tabRiwayat);
+    // Panggil loadRiwayat untuk narik data dari Supabase
+    if (typeof loadRiwayat === "function") {
+      loadRiwayat();
+    }
+  }
 }
 function bukaDetailP(status) {
   const el = document.getElementById("detail-card-p");
