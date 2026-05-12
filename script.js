@@ -99,19 +99,22 @@ function pilihJenis(val) {
     .join("");
 }
 function kirimPermohonan() {
-  // 1. Cek apakah captcha sudah dicentang
-  if (!document.getElementById("captcha").checked) {
+  // 1. Ambil elemen checkbox berdasarkan ID-nya (pastikan pakai captcha2)
+  const captcha = document.getElementById("captcha2");
+
+  // 2. Cek apakah elemen ada dan apakah sudah dicentang
+  if (!captcha || !captcha.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
-    return;
+    return; // Berhenti di sini, jangan lanjut ke proses delay
   }
 
-  // 2. Tampilkan efek loading pada tombol
+  // 3. Jika sudah dicentang, jalankan efek delay
   const btn = event.target;
   const teksAsli = btn.innerText;
+
   btn.disabled = true;
   btn.innerText = "Sedang mengirim... Mohon tunggu";
 
-  // 3. Beri delay (simulasi pengiriman data selama 2 detik)
   setTimeout(function () {
     btn.disabled = false;
     btn.innerText = teksAsli;
