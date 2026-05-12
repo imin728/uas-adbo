@@ -128,6 +128,10 @@ function switchTabP(tab, el) {
     tab === "buat" ? "block" : "none";
   document.getElementById("ptab-riwayat").style.display =
     tab === "riwayat" ? "block" : "none";
+
+  if (tab === "riwayat") {
+    loadRiwayat();
+  }
 }
 function pilihJenis(val) {
   const wrap = document.getElementById("syarat-wrap");
@@ -210,6 +214,33 @@ async function kirimPermohonan() {
     // Kembalikan tombol ke keadaan semula
     btn.disabled = false;
     btn.innerText = teksAsli;
+  }
+}
+async function loadRiwayat() {
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+  const tabelBody = document.getElementById("tabel-riwayat-body");
+
+  // Ambil data dari Supabase
+  const { data, error } = await supabaseClient
+    .from("permohonan")
+    .select("*")
+    .eq("user_id", user.id) // Ambil yang ID usernya cocok
+    .order("created_at", { ascending: false });
+
+  if (data) {
+    tabelBody.innerHTML = ""; // Bersihkan loading
+    data.forEach((row, i) => {
+      tabelBody.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.jenis_layanan}</td>
+          <td>${new Date(row.created_at).toLocaleDateString("id-ID")}</td>
+          <td><span class="status-${row.status.toLowerCase()}">${row.status}</span></td>
+          <td><button onclick="detail('${row.id}')">Cek</button></td>
+        </tr>`;
+    });
   }
 }
 function keRiwayatP() {
