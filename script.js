@@ -99,27 +99,27 @@ function pilihJenis(val) {
     .join("");
 }
 function kirimPermohonan() {
-  // 1. Ambil elemen checkbox berdasarkan ID-nya (pastikan pakai captcha2)
-  const captcha = document.getElementById("captcha2");
+  // PASTIKAN ID-nya 'captcha2' sesuai dengan yang ada di HTML kamu
+  const cek = document.getElementById("captcha");
 
-  // 2. Cek apakah elemen ada dan apakah sudah dicentang
-  if (!captcha || !captcha.checked) {
+  if (!cek || !cek.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
-    return; // Berhenti di sini, jangan lanjut ke proses delay
+    return; // Berhenti di sini jika belum dicentang
   }
 
-  // 3. Jika sudah dicentang, jalankan efek delay
+  // JIKA LOLOS CEK CAPTCHA, JALANKAN DELAY
   const btn = event.target;
   const teksAsli = btn.innerText;
 
   btn.disabled = true;
   btn.innerText = "Sedang mengirim... Mohon tunggu";
 
+  // Simulasi loading 2 detik
   setTimeout(function () {
     btn.disabled = false;
     btn.innerText = teksAsli;
 
-    // Pindah ke halaman sukses
+    // Pindah ke layar sukses
     showPP("sukses");
   }, 2000);
 }
