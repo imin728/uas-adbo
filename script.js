@@ -99,28 +99,36 @@ function pilihJenis(val) {
     .join("");
 }
 function kirimPermohonan() {
-  // PASTIKAN ID-nya 'captcha2' sesuai dengan yang ada di HTML kamu
+  // 1. Ambil checkbox berdasarkan ID yang ada di HTML kamu (captcha)
   const cek = document.getElementById("captcha");
 
+  // 2. Logika pengecekan
   if (!cek || !cek.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
-    return; // Berhenti di sini jika belum dicentang
+    return;
   }
 
-  // JIKA LOLOS CEK CAPTCHA, JALANKAN DELAY
-  const btn = event.target;
+  // 3. Ambil tombol secara spesifik agar tidak error (pilih salah satu cara)
+  // Kita cari tombol yang sedang diklik
+  const btn = document.querySelector(
+    ".btn-primary[onclick='kirimPermohonan()']",
+  );
   const teksAsli = btn.innerText;
 
+  // 4. Jalankan efek loading
   btn.disabled = true;
   btn.innerText = "Sedang mengirim... Mohon tunggu";
 
-  // Simulasi loading 2 detik
+  // 5. Delay 2 detik sebelum pindah halaman
   setTimeout(function () {
     btn.disabled = false;
     btn.innerText = teksAsli;
 
     // Pindah ke layar sukses
     showPP("sukses");
+
+    // Reset captcha agar kalau balik lagi sudah kosong
+    cek.checked = false;
   }, 2000);
 }
 function keRiwayatP() {
