@@ -144,38 +144,73 @@ function pilihJenis(val) {
     )
     .join("");
 }
-function kirimPermohonan() {
-  // 1. Ambil checkbox berdasarkan ID yang ada di HTML kamu (captcha)
+async function kirimPermohonan() {
+  // 1. Ambil elemen-elemen dari HTML
   const cek = document.getElementById("captcha");
+  const layananSelect = document.getElementById("pilih-layanan"); // ID sesuai HTML kamu
+  const btn = event.currentTarget; // Menangkap tombol yang diklik
 
-  // 2. Logika pengecekan
+  // 2. Validasi Captcha
   if (!cek || !cek.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
     return;
   }
 
-  // 3. Ambil tombol secara spesifik agar tidak error (pilih salah satu cara)
-  // Kita cari tombol yang sedang diklik
-  const btn = document.querySelector(
-    ".btn-primary[onclick='kirimPermohonan()']",
-  );
+  // 3. Validasi Pilihan Layanan
+  const jenisLayanan = layananSelect.value;
+  if (!jenisLayanan) {
+    alert("Harap pilih jenis layanan terlebih dahulu!");
+    return;
+  }
+
+  // 4. Efek Loading
   const teksAsli = btn.innerText;
-
-  // 4. Jalankan efek loading
   btn.disabled = true;
-  btn.innerText = "Sedang mengirim... Mohon tunggu";
+  btn.innerText = "Sedang Mengirim...";
 
-  // 5. Delay 2 detik sebelum pindah halaman
-  setTimeout(function () {
-    btn.disabled = false;
-    btn.innerText = teksAsli;
+  try {
+    // 5. Ambil data user yang login
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+      alert("Sesi berakhir, silakan login kembali.");
+      showPP("login");
+      return;
+    }
+
+    // 6. Kirim data ke tabel 'permohonan'
+    const { error } = await supabaseClient.from("permohonan").insert([
+      {
+        user_id: user.id,
+        nama_pemohon: user.user_metadata.full_name,
+        nik: user.user_metadata.nik,
+        jenis_layanan: jenisLayanan,
+        alasan: "-", // Karena di HTML kamu belum ada input alasan, kita isi strip dulu
+        status: "Pending",
+      },
+    ]);
+
+    if (error) throw error;
+
+    // 7. Jika Berhasil
+    alert("Permohonan Berhasil Dikirim!");
+
+    // Reset Form
+    cek.checked = false;
+    layananSelect.value = "";
+    document.getElementById("syarat-wrap").style.display = "none";
 
     // Pindah ke layar sukses
     showPP("sukses");
-
-    // Reset captcha agar kalau balik lagi sudah kosong
-    cek.checked = false;
-  }, 2000);
+  } catch (error) {
+    alert("Gagal mengirim: " + error.message);
+  } finally {
+    // Kembalikan tombol ke keadaan semula
+    btn.disabled = false;
+    btn.innerText = teksAsli;
+  }
 }
 function keRiwayatP() {
   showPP("dashboard");
