@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PTSP Kemenag Gorontalo - UAS ADBO</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="modal-overlay" id="modal-peran">
+      <div class="modal-box">
+        <div class="modal-title">Masuk ke PTSP Kemenag Gorontalo</div>
+        <div class="modal-sub">Pilih jenis akun untuk melanjutkan</div>
+        <div class="role-cards">
+          <div class="role-card" onclick="pilihPeran('pemohon')">
+            <span class="role-icon">🙋</span>
+            <div class="role-label">Pemohon</div>
+            <div class="role-desc">Ajukan dan pantau permohonan layanan</div>
+          </div>
+          <div class="role-card" onclick="pilihPeran('petugas')">
+            <span class="role-icon">🏛️</span>
+            <div class="role-label">Petugas</div>
+            <div class="role-desc">Verifikasi dan kelola permohonan masuk</div>
+          </div>
+        </div>
+        <span class="modal-cancel" onclick="tutupModal()">Batal</span>
+      </div>
+    </div>
+
+    <!-- ════════════ TAMPILAN PEMOHON ════════════ -->
+    <div class="main-wrap" id="pemohon-wrap">
+      <div class="nav">
+        <span class="nav-brand">PTSP Kemenag Gorontalo</span>
+        <div class="nav-right">
+          <span class="nav-user" id="nav-user-p" style="display: none"
+            >Siti Rahma</span
+          >
+          <button class="nav-btn" id="nav-action-p" onclick="bukaModal()">
+            Login
+          </button>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <!-- LANDING -->
+        <div class="page active" id="pp-landing">
+          <div class="landing">
+            <div class="landing-logo">🏛️</div>
+            <div class="landing-title">
+              Selamat datang di PTSP Kemenag Gorontalo
+            </div>
+            <div class="landing-sub">
+              Pelayanan Terpadu Satu Pintu Kementerian Agama Provinsi
+              Gorontalo.<br />Login untuk mengajukan atau memantau permohonan
+              Anda.
+            </div>
+            <button class="landing-btn" onclick="bukaModal()">
+              Login untuk memulai
+            </button>
+          </div>
+        </div>
+
+        <!-- LOGIN PEMOHON -->
+        <div class="page" id="pp-login">
+          <div style="max-width: 360px; margin: 0 auto">
+            <div class="card">
+              <div class="card-title" style="text-align: center">
+                Masuk sebagai Pemohon
+              </div>
+              <div class="form-group">
+                <label>Email</label
+                ><input type="email" value="siti.rahma@gmail.com" />
+              </div>
+              <div class="form-group">
+                <label>Password</label
+                ><input type="password" value="12345678" />
+              </div>
+              <button
+                class="btn-primary"
+                style="margin-top: 4px"
+                onclick="doLoginPemohon()"
+              >
+                Masuk
+              </button>
+              <div class="center">
+                <span class="link" onclick="showPP('register')"
+                  >Belum punya akun? Daftar</span
+                >
+              </div>
+              <div class="center" style="margin-top: 8px">
+                <span
+                  class="link"
+                  onclick="bukaModal()"
+                  style="color: var(--text-2); font-size: 12px"
+                  >← Pilih jenis akun lain</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REGISTER PEMOHON -->
+        <div class="page" id="pp-register">
+          <div style="max-width: 400px; margin: 0 auto">
+            <div class="card">
+              <div class="card-title" style="text-align: center">
+                Buat akun Pemohon
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nama lengkap</label
+                  ><input placeholder="Nama lengkap" />
+                </div>
+                <div class="form-group">
+                  <label>NIK</label><input placeholder="16 digit NIK" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Email</label
+                ><input type="email" placeholder="email@gmail.com" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Password</label
+                  ><input type="password" placeholder="••••••••" />
+                </div>
+                <div class="form-group">
+                  <label>Konfirmasi password</label
+                  ><input type="password" placeholder="••••••••" />
+                </div>
+              </div>
+              <button class="btn-primary" onclick="showPP('login')">
+                Daftar sekarang
+              </button>
+              <div class="center">
+                <span class="link" onclick="showPP('login')"
+                  >Sudah punya akun? Masuk</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DASHBOARD PEMOHON -->
+        <div class="page" id="pp-dashboard">
+          <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTabP('buat', this)">
+              Buat permohonan
+            </div>
+            <div class="nav-tab" onclick="switchTabP('riwayat', this)">
+              Riwayat permohonan
+            </div>
+          </div>
+
+          <div id="ptab-buat">
+            <div class="card">
+              <div class="card-title">Form permohonan</div>
+              <div class="form-group">
+                <label>Jenis permohonan</label>
+                <select id="pilih-layanan" onchange="pilihJenis(this.value)">
+                  <option value="" selected disabled>
+                    -- Pilih Jenis Layanan --
+                  </option>
+                  <option value="permintaan_data">Permintaan Data</option>
+                  <option value="rohaniawan">Rohaniawan</option>
+                  <option value="permintaan_kesediaan">
+                    Permintaan Kesediaan
+                  </option>
+                  <option value="perubahan_sirup">Perubahan Data SIRUP</option>
+                  <option value="permohonan_rekomendasi">
+                    Permohonan Rekomendasi
+                  </option>
+                </select>
+              </div>
+              <div id="syarat-wrap" style="display: none">
+                <div class="dok-syarat">
+                  <div class="dok-syarat-title">Upload dokumen persyaratan</div>
+                  <div id="dok-list"></div>
+                </div>
+                <div class="captcha-box">
+                  <input type="checkbox" class="captcha-check" id="captcha" />
+                  <label class="captcha-label" for="captcha"
+                    >Saya bukan robot</label
+                  >
+                </div>
+                <button class="btn-primary" onclick="kirimPermohonan()">
+                  Kirim permohonan
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="ptab-riwayat" style="display: none">
+            <div class="card">
+              <div class="card-title">Riwayat permohonan</div>
+              <div class="riwayat-item" onclick="bukaDetailP('selesai')">
+                <div class="riwayat-head">
+                  <span class="riwayat-title">Permohonan Rekomendasi</span>
+                  <span class="badge selesai">Selesai</span>
+                </div>
+                <div class="riwayat-date">
+                  Diajukan: 01 Mei 2026 &nbsp;|&nbsp; No: PTSP/2026/004
+                </div>
+              </div>
+              <div class="riwayat-item" onclick="bukaDetailP('menunggu')">
+                <div class="riwayat-head">
+                  <span class="riwayat-title">Rohaniawan</span
+                  ><span class="badge menunggu">Menunggu verifikasi</span>
+                </div>
+                <div class="riwayat-date">
+                  Diajukan: 03 Mei 2026 &nbsp;|&nbsp; No: PTSP/2026/007
+                </div>
+              </div>
+              <div class="riwayat-item" onclick="bukaDetailP('tolak-dok')">
+                <div class="riwayat-head">
+                  <span class="riwayat-title">Permintaan Data</span
+                  ><span class="badge ditolak">Ditolak</span>
+                </div>
+                <div class="riwayat-date">
+                  Diajukan: 28 Apr 2026 &nbsp;|&nbsp; No: PTSP/2026/002
+                </div>
+              </div>
+              <div class="riwayat-item" onclick="bukaDetailP('tolak-non')">
+                <div class="riwayat-head">
+                  <span class="riwayat-title">Permintaan Kesediaan</span
+                  ><span class="badge ditolak">Ditolak</span>
+                </div>
+                <div class="riwayat-date">
+                  Diajukan: 25 Apr 2026 &nbsp;|&nbsp; No: PTSP/2026/001
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETAIL PEMOHON -->
+        <div class="page" id="pp-detail">
+          <button class="back-btn" onclick="keRiwayatP()">
+            ← Kembali ke riwayat
+          </button>
+          <div class="card" id="detail-card-p"></div>
+        </div>
+
+        <!-- AJUKAN ULANG -->
+        <div class="page" id="pp-ulang">
+          <button class="back-btn" onclick="keRiwayatP()">
+            ← Kembali ke riwayat
+          </button>
+          <div class="card">
+            <div class="card-title">Upload ulang dokumen</div>
+            <div class="info-box">
+              ℹ️ Hanya dokumen yang perlu diperbaiki yang perlu diupload ulang.
+              Dokumen lain sudah tersimpan.
+            </div>
+            <div
+              class="dok-syarat-title"
+              style="
+                font-size: 12px;
+                color: var(--text-2);
+                font-weight: 500;
+                margin-bottom: 8px;
+              "
+            >
+              Status dokumen
+            </div>
+            <div class="dok-item-ok">
+              <span>Surat permohonan (PDF)</span
+              ><span class="ok-badge">✓ Sudah diterima</span>
+            </div>
+            <div class="dok-item-ok">
+              <span>Kartu keluarga (PDF)</span
+              ><span class="ok-badge">✓ Sudah diterima</span>
+            </div>
+            <div
+              style="
+                margin-top: 10px;
+                margin-bottom: 6px;
+                font-size: 12px;
+                color: #712b13;
+                font-weight: 500;
+              "
+            >
+              Perlu diupload ulang:
+            </div>
+            <div class="dok-item-err">
+              <span>KTP pemohon (PDF) — buram/tidak jelas</span
+              ><small>Pilih file baru</small>
+            </div>
+            <div style="margin-top: 16px">
+              <div class="captcha-box">
+                <input type="checkbox" class="captcha-check" id="captcha2" />
+                <label class="captcha-label" for="captcha2"
+                  >Saya bukan robot</label
+                >
+              </div>
+              <button class="btn-primary" onclick="kirimPermohonan()">
+                Kirim ulang permohonan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUKSES -->
+        <div class="page" id="pp-sukses">
+          <div class="card">
+            <div class="success-wrap">
+              <div class="success-icon">✓</div>
+              <div class="success-title">Permohonan berhasil dikirim!</div>
+              <div class="success-sub">
+                Permohonan Anda sedang menunggu verifikasi petugas.
+              </div>
+              <button
+                class="btn-primary"
+                style="max-width: 240px; margin: 0 auto"
+                onclick="keRiwayatP()"
+              >
+                Lihat riwayat permohonan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end wrap pemohon -->
+    </div>
+    <!-- end pemohon-wrap -->
+
+    <!-- ════════════ TAMPILAN PETUGAS ════════════ -->
+    <div class="petugas-wrap" id="petugas-wrap">
+      <!-- LOGIN PETUGAS -->
+      <div id="pt-login-page">
+        <div class="nav">
+          <span class="nav-brand">PTSP Kemenag Gorontalo — Petugas</span>
+          <div class="nav-right">
+            <button
+              class="nav-btn"
+              onclick="bukaModal()"
+              style="opacity: 0.8; font-size: 11px"
+            >
+              ← Ganti peran
+            </button>
+          </div>
+        </div>
+        <div
+          style="
+            background: var(--bg2);
+            padding: 20px;
+            border-radius: 0 0 var(--radius) var(--radius);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 30px 20px;
+            "
+          >
+            <div
+              style="
+                background: #fff;
+                border: 0.5px solid var(--border);
+                border-radius: var(--radius);
+                padding: 28px 24px;
+                width: 100%;
+                max-width: 360px;
+              "
+            >
+              <div
+                style="
+                  background: var(--blue);
+                  border-radius: var(--radius-sm);
+                  padding: 8px 14px;
+                  display: inline-block;
+                  margin-bottom: 20px;
+                "
+              >
+                <span style="color: #e6f1fb; font-size: 13px; font-weight: 500"
+                  >PTSP Kemenag Gorontalo</span
+                >
+              </div>
+              <div
+                style="
+                  font-size: 17px;
+                  font-weight: 500;
+                  color: var(--text);
+                  margin-bottom: 4px;
+                "
+              >
+                Masuk sebagai Petugas
+              </div>
+              <div
+                style="
+                  font-size: 12px;
+                  color: var(--text-2);
+                  margin-bottom: 24px;
+                "
+              >
+                Gunakan nama pengguna dan kata sandi yang diberikan admin sistem
+              </div>
+              <div class="form-group">
+                <label>Nama pengguna</label
+                ><input
+                  type="text"
+                  id="pt-input-user"
+                  placeholder="cth: ahmad.fauzi"
+                  onkeydown="if (event.key === 'Enter') doLoginPetugas();"
+                />
+              </div>
+              <div class="form-group">
+                <label>Kata sandi</label
+                ><input
+                  type="password"
+                  id="pt-input-pass"
+                  placeholder="••••••••"
+                  onkeydown="if (event.key === 'Enter') doLoginPetugas();"
+                />
+              </div>
+              <div class="login-err" id="pt-login-err">
+                Nama pengguna atau kata sandi salah.
+              </div>
+              <button class="btn-primary" onclick="doLoginPetugas()">
+                Masuk
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD PETUGAS -->
+      <div id="pt-dashboard-page" style="display: none">
+        <div class="nav">
+          <span class="nav-brand">PTSP Kemenag Gorontalo — Admin</span>
+          <div class="nav-right">
+            <span class="nav-user" id="pt-nav-nama">Ahmad Fauzi, S.Ag</span>
+            <span class="nav-badge">Petugas</span>
+            <button class="nav-btn" onclick="doLogoutPetugas()">Logout</button>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: var(--bg2);
+            padding: 20px;
+            border-radius: 0 0 var(--radius) var(--radius);
+          "
+        >
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Total permohonan</div>
+              <div class="stat-val blue">24</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Menunggu verifikasi</div>
+              <div class="stat-val amber">8</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Selesai</div>
+              <div class="stat-val teal">13</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Ditolak</div>
+              <div class="stat-val coral">3</div>
+            </div>
+          </div>
+
+          <div class="card" id="pt-table-card">
+            <div class="card-head">
+              <span class="card-title">Daftar permohonan masuk</span>
+              <div class="filter">
+                <button class="active" onclick="filterTable('semua', this)">
+                  Semua
+                </button>
+                <button onclick="filterTable('menunggu', this)">
+                  Menunggu
+                </button>
+                <button onclick="filterTable('diproses', this)">
+                  Diproses
+                </button>
+                <button onclick="filterTable('selesai', this)">Selesai</button>
+                <button onclick="filterTable('ditolak', this)">Ditolak</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama pemohon</th>
+                  <th>Jenis permohonan</th>
+                  <th>Tanggal</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pt-tabel-body">
+                <tr data-status="menunggu">
+                  <td>001</td>
+                  <td>Siti Rahma</td>
+                  <td>Permohonan Rekomendasi</td>
+                  <td>03 Mei 2026</td>
+                  <td>
+                    <span class="badge menunggu">Menunggu verifikasi</span>
+                  </td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Siti Rahma',
+                          'Permohonan Rekomendasi',
+                          'menunggu',
+                          false,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+                <tr data-status="menunggu">
+                  <td>002</td>
+                  <td>Baharuddin</td>
+                  <td>Rohaniawan</td>
+                  <td>03 Mei 2026</td>
+                  <td>
+                    <span class="badge menunggu">Menunggu verifikasi</span>
+                  </td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Baharuddin',
+                          'Rohaniawan',
+                          'menunggu',
+                          false,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+                <tr data-status="diproses">
+                  <td>003</td>
+                  <td>Nurlaila Hasan</td>
+                  <td>Permintaan Kesediaan</td>
+                  <td>02 Mei 2026</td>
+                  <td><span class="badge diproses">Sedang diproses</span></td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Nurlaila Hasan',
+                          'Permintaan Kesediaan',
+                          'diproses',
+                          false,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+                <tr data-status="selesai">
+                  <td>004</td>
+                  <td>Abdul Karim</td>
+                  <td>Permohonan Rekomendasi</td>
+                  <td>01 Mei 2026</td>
+                  <td><span class="badge selesai">Selesai</span></td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Abdul Karim',
+                          'Permohonan Rekomendasi',
+                          'selesai',
+                          false,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+                <tr data-status="ditolak">
+                  <td>005</td>
+                  <td>Fatimah Djafar</td>
+                  <td>Permintaan Data</td>
+                  <td>30 Apr 2026</td>
+                  <td><span class="badge ditolak">Ditolak</span></td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Fatimah Djafar',
+                          'Permintaan Data',
+                          'ditolak',
+                          false,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+                <tr data-status="menunggu">
+                  <td>006</td>
+                  <td>Fatimah Djafar <span class="tag-revisi">Revisi</span></td>
+                  <td>Permintaan Data</td>
+                  <td>04 Mei 2026</td>
+                  <td>
+                    <span class="badge menunggu">Menunggu verifikasi</span>
+                  </td>
+                  <td>
+                    <button
+                      class="btn-buka"
+                      onclick="
+                        bukaDetailPT(
+                          'Fatimah Djafar',
+                          'Permintaan Data',
+                          'menunggu',
+                          true,
+                        )
+                      "
+                    >
+                      Buka
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="detail-wrap" id="pt-detail-card">
+            <button class="back-btn" onclick="kembaliPT()">
+              ← Kembali ke daftar
+            </button>
+            <div class="detail-head">
+              <div>
+                <div class="detail-title" id="pt-detail-nama"></div>
+                <div class="detail-sub" id="pt-detail-jenis"></div>
+              </div>
+              <span class="badge" id="pt-detail-badge"></span>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <label>NIK</label>
+                <p>7471234567890001</p>
+              </div>
+              <div class="info-item">
+                <label>Email</label>
+                <p>pemohon@gmail.com</p>
+              </div>
+              <div class="info-item">
+                <label>Tanggal masuk</label>
+                <p>03 Mei 2026</p>
+              </div>
+              <div class="info-item">
+                <label>No. permohonan</label>
+                <p>PTSP/2026/001</p>
+              </div>
+            </div>
+
+            <div class="dok-list">
+              <div class="dok-title">Dokumen yang diupload</div>
+              <div class="dok-item">
+                <span class="dok-name">Surat permohonan.pdf</span
+                ><span class="dok-link">Lihat dokumen</span>
+              </div>
+              <div class="dok-item">
+                <span class="dok-name">KTP pemohon.pdf</span
+                ><span class="dok-link">Lihat dokumen</span>
+              </div>
+              <div class="dok-item">
+                <span class="dok-name">Buku nikah.pdf</span
+                ><span class="dok-link">Lihat dokumen</span>
+              </div>
+            </div>
+
+            <div class="riwayat-box" id="pt-riwayat-box" style="display: none">
+              <div class="riwayat-box-label">Riwayat penolakan sebelumnya</div>
+              <div class="riwayat-item-p" id="pt-riwayat-isi"></div>
+            </div>
+
+            <div class="action-area" id="pt-action-area">
+              <div class="action-title">Tindakan verifikasi</div>
+              <div class="action-btns">
+                <button class="btn-acc" onclick="toggleAcc()">
+                  ✓ Setujui permohonan
+                </button>
+                <button class="btn-tolak" onclick="toggleTolak()">
+                  ✕ Tolak permohonan
+                </button>
+              </div>
+
+              <!-- Form Setujui -->
+              <div class="acc-form" id="pt-acc-form">
+                <label
+                  >Upload dokumen hasil
+                  <span style="color: var(--red)">*</span></label
+                >
+                <div class="upload-area">
+                  <p>Seret file ke sini atau</p>
+                  <span>klik untuk memilih file</span>
+                </div>
+                <button
+                  class="btn-kirim-acc"
+                  onclick="
+                    alert('Permohonan berhasil disetujui!');
+                    kembaliPT();
+                  "
+                >
+                  Kirim persetujuan
+                </button>
+              </div>
+
+              <!-- Form Tolak -->
+              <div class="tolak-form" id="pt-tolak-form">
+                <div class="tolak-type-row">
+                  <button
+                    class="tolak-type-btn"
+                    id="pt-type-dokumen"
+                    onclick="pilihTolakType('dokumen')"
+                  >
+                    📄 Dokumen bermasalah
+                  </button>
+                  <button
+                    class="tolak-type-btn"
+                    id="pt-type-nondokumen"
+                    onclick="pilihTolakType('nondokumen')"
+                  >
+                    ⚠️ Non Dokumen Bermasalah
+                  </button>
+                </div>
+
+                <div class="tolak-panel" id="pt-panel-dokumen">
+                  <label
+                    >Dokumen bermasalah
+                    <span style="color: var(--red)">*</span></label
+                  >
+                  <div class="cek-list" id="pt-cek-list">
+                    <label class="cek-item"
+                      ><input type="checkbox" onchange="cekValidasiDok()" />
+                      Surat permohonan.pdf</label
+                    >
+                    <label class="cek-item"
+                      ><input type="checkbox" onchange="cekValidasiDok()" /> KTP
+                      pemohon.pdf</label
+                    >
+                    <label class="cek-item"
+                      ><input type="checkbox" onchange="cekValidasiDok()" />
+                      Buku nikah.pdf</label
+                    >
+                  </div>
+                  <div class="tolak-hint" id="pt-hint-dok-cek">
+                    Pilih minimal satu dokumen bermasalah.
+                  </div>
+                  <label style="margin-top: 10px; display: block"
+                    >Alasan penolakan
+                    <span style="color: var(--red)">*</span></label
+                  >
+                  <textarea
+                    id="pt-alasan-dok"
+                    placeholder="Jelaskan masalah pada dokumen tersebut..."
+                    oninput="cekValidasiDok()"
+                  ></textarea>
+                  <div class="tolak-hint" id="pt-hint-dok-alasan">
+                    Alasan penolakan wajib diisi.
+                  </div>
+                  <button
+                    class="btn-kirim-tolak"
+                    id="pt-btn-kirim-dok"
+                    onclick="kirimTolak('dokumen')"
+                    disabled
+                  >
+                    Kirim penolakan
+                  </button>
+                </div>
+
+                <div class="tolak-panel" id="pt-panel-nondokumen">
+                  <label
+                    >Kategori penolakan
+                    <span style="color: var(--red)">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="pt-kategori-nondok"
+                    placeholder="cth: Persyaratan tidak terpenuhi..."
+                    oninput="cekValidasiNonDok()"
+                    style="
+                      width: 100%;
+                      font-size: 13px;
+                      padding: 8px;
+                      border: 0.5px solid var(--border2);
+                      border-radius: var(--radius-sm);
+                      background: #fff;
+                      color: var(--text);
+                      margin-bottom: 10px;
+                    "
+                  />
+                  <label
+                    >Alasan penolakan
+                    <span style="color: var(--red)">*</span></label
+                  >
+                  <textarea
+                    id="pt-alasan-nondok"
+                    placeholder="Tuliskan alasan penolakan secara jelas..."
+                    oninput="cekValidasiNonDok()"
+                  ></textarea>
+                  <div class="tolak-hint" id="pt-hint-nondok">
+                    Kategori dan alasan penolakan wajib diisi.
+                  </div>
+                  <button
+                    class="btn-kirim-tolak"
+                    id="pt-btn-kirim-nondok"
+                    onclick="kirimTolak('nondokumen')"
+                    disabled
+                  >
+                    Kirim penolakan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end pt-dashboard-page -->
+    </div>
+    <!-- end petugas-wrap -->
+
+    <script src="script.js"></script>
+  </body>
+</html>
