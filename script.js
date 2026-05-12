@@ -1,3 +1,13 @@
+// 1. Inisialisasi Database
+// Perhatian: /rest/v1/ dihapus agar SDK bisa bekerja dengan benar
+const SUPABASE_URL = "https://sjykqwkdsubugqxyavyr.supabase.co";
+
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeWtxd2tkc3VidWdxeHlhdnlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1OTMzNDYsImV4cCI6MjA5NDE2OTM0Nn0.NEH3Xq8V_UsnnzFB2zzuLEBkDcV9UrMI6lLQeBoFaJE";
+
+// Pastikan variabel 'supabase' (huruf kecil) dibuat dari objek 'supabase' (library)
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // Tambahkan ini di baris pertama script.js
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof lucide !== "undefined") {
@@ -218,15 +228,67 @@ function doLoginPetugas() {
   const user = document.getElementById("pt-input-user").value.trim();
   const pass = document.getElementById("pt-input-pass").value;
   const err = document.getElementById("pt-login-err");
-  if (akunPetugas[user] && akunPetugas[user].pass === pass) {
-    err.classList.remove("show");
-    document.getElementById("pt-nav-nama").textContent = akunPetugas[user].nama;
-    document.getElementById("pt-login-page").style.display = "none";
-    document.getElementById("pt-dashboard-page").style.display = "block";
+  const btn = event.target; // Ambil tombol yang diklik
+
+  btn.innerText = "Mengecek...";
+  btn.disabled = true;
+
+  setTimeout(() => {
+    if (akunPetugas[user] && akunPetugas[user].pass === pass) {
+      err.classList.remove("show");
+      document.getElementById("pt-nav-nama").textContent =
+        akunPetugas[user].nama;
+      document.getElementById("pt-login-page").style.display = "none";
+      document.getElementById("pt-dashboard-page").style.display = "block";
+    } else {
+      err.classList.add("show");
+      btn.innerText = "Login sebagai Petugas";
+      btn.disabled = false;
+    }
+  }, 1000); // Delay 1 detik biar keren
+}
+
+async function doRegister() {
+  // Ambil semua elemen input di dalam modal register
+  const inputs = document.querySelectorAll("#pp-register input");
+
+  const nama = inputs[0].value; // Input Nama
+  const nik = inputs[1].value; // Input NIK
+  const email = inputs[2].value; // Input Email
+  const password = inputs[3].value; // Input Password
+  const confirm = inputs[4].value; // Input Konfirmasi
+
+  // Validasi sederhana
+  if (!nama || !email || !password) {
+    alert("Nama, Email, dan Password wajib diisi ya min!");
+    return;
+  }
+
+  if (password !== confirm) {
+    alert("Password dan Konfirmasi Password nggak sama nih!");
+    return;
+  }
+
+  // Eksekusi ke Supabase
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
+    options: {
+      data: {
+        full_name: nama,
+        nik: nik,
+      },
+    },
+  });
+
+  if (error) {
+    alert("Gagal daftar: " + error.message);
   } else {
-    err.classList.add("show");
+    alert("Alhamdulillah, Berhasil Daftar! Silakan masuk.");
+    showPP("login");
   }
 }
+
 function doLogoutPetugas() {
   document.getElementById("pt-input-user").value = "";
   document.getElementById("pt-input-pass").value = "";
