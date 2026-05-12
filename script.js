@@ -6,7 +6,7 @@ const SUPABASE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeWtxd2tkc3VidWdxeHlhdnlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1OTMzNDYsImV4cCI6MjA5NDE2OTM0Nn0.NEH3Xq8V_UsnnzFB2zzuLEBkDcV9UrMI6lLQeBoFaJE";
 
 // Pastikan variabel 'supabase' (huruf kecil) dibuat dari objek 'supabase' (library)
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Tambahkan ini di baris pertama script.js
 document.addEventListener("DOMContentLoaded", () => {
@@ -71,17 +71,53 @@ function showPP(p) {
     .forEach((x) => x.classList.remove("active"));
   document.getElementById("pp-" + p).classList.add("active");
 }
-function doLoginPemohon() {
-  document.getElementById("nav-user-p").style.display = "inline";
-  document.getElementById("nav-action-p").textContent = "Logout";
-  document.getElementById("nav-action-p").onclick = () => {
-    document.getElementById("nav-user-p").style.display = "none";
-    document.getElementById("nav-action-p").textContent = "Login";
-    document.getElementById("nav-action-p").onclick = bukaModal;
-    showPP("landing");
-  };
-  showPP("dashboard");
-  switchTabP("buat", document.querySelectorAll("#pemohon-wrap .nav-tab")[0]);
+async function doLoginPemohon() {
+  const email = document.querySelector("#pp-login input[type='email']").value;
+  const password = document.querySelector(
+    "#pp-login input[type='password']",
+  ).value;
+  const btn = event.target;
+
+  if (!email || !password) {
+    alert("Email dan password harus diisi!");
+    return;
+  }
+
+  const teksAsli = btn.innerText;
+  btn.innerText = "Memverifikasi...";
+  btn.disabled = true;
+
+  // LOGIN KE SUPABASE
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
+
+  if (error) {
+    alert("Login Gagal: " + error.message);
+    btn.innerText = teksAsli;
+    btn.disabled = false;
+  } else {
+    // AMBIL NAMA DARI METADATA
+    const userNama = data.user.user_metadata.full_name || "Pemohon";
+
+    const navUser = document.getElementById("nav-user-p");
+    navUser.textContent = userNama;
+    navUser.style.display = "inline";
+
+    const navBtn = document.getElementById("nav-action-p");
+    navBtn.textContent = "Logout";
+    navBtn.onclick = async () => {
+      await supabaseClient.auth.signOut(); // Logout dari Supabase juga
+      navUser.style.display = "none";
+      navBtn.textContent = "Login";
+      navBtn.onclick = bukaModal;
+      showPP("landing");
+    };
+
+    showPP("dashboard");
+    switchTabP("buat", document.querySelectorAll("#pemohon-wrap .nav-tab")[0]);
+  }
 }
 function switchTabP(tab, el) {
   document
@@ -270,7 +306,7 @@ async function doRegister() {
   }
 
   // Eksekusi ke Supabase
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email: email,
     password: password,
     options: {
