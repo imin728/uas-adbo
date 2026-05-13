@@ -365,7 +365,7 @@ async function bukaDetailP(status, rowId) {
       row.kategori_tolak &&
       row.kategori_tolak.toLowerCase().indexOf("dokumen") !== -1;
     var btnAksi = isDocError
-      ? '<button class="btn-ulang" onclick="showPP(\'ulang\')" >Upload ulang dokumen</button>'
+      ? '<button class="btn-ulang" onclick="showPP(\'ulang\')" >Ajukan Ulang</button>'
       : '<button class="btn-ulang" onclick="buatPermohonanBaru()">Buat permohonan baru</button>';
     el.innerHTML =
       head +
