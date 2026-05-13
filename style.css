@@ -27,10 +27,20 @@
   margin: 0;
   padding: 0;
 }
+
 body {
   font-family: system-ui, sans-serif;
-  background: var(--bg);
-  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #0c447c 0%,
+    #185fa5 40%,
+    #1d7fc4 70%,
+    #1d9e75 100%
+  );
+  padding: 40px 20px;
+  position: relative;
+  overflow-x: hidden;
 }
 
 /* NAV */
@@ -106,14 +116,15 @@ body {
 
 /* MODAL */
 .modal-overlay {
-  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; /* default-nya flex, tapi di-override inline style:none */
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 }
+
 .modal-overlay.open {
   display: flex;
 }
@@ -1068,21 +1079,6 @@ tr:hover td {
   display: flex;
 }
 
-/* ─── BACKGROUND UTAMA ─── */
-body {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    #0c447c 0%,
-    #185fa5 40%,
-    #1d7fc4 70%,
-    #1d9e75 100%
-  );
-  padding: 40px 20px;
-  position: relative;
-  overflow-x: hidden;
-}
-
 /* Dekorasi lingkaran blur di background */
 body::before {
   content: "";
@@ -1124,9 +1120,9 @@ body::after {
 }
 
 /* Pastikan konten di atas background */
+/* Pastikan konten di atas background */
 .main-wrap,
-.petugas-wrap,
-.modal-overlay {
+.petugas-wrap {
   position: relative;
   z-index: 1;
 }

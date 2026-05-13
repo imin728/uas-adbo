@@ -43,7 +43,7 @@ function tutupModal() {
   document.getElementById("modal-peran").style.display = "none";
 }
 function pilihPeran(peran) {
-  tutupModal();
+  document.getElementById("modal-peran").style.display = "none";
   if (peran === "pemohon") {
     document.getElementById("pemohon-wrap").style.display = "block";
     document.getElementById("petugas-wrap").style.display = "none";
@@ -55,9 +55,6 @@ function pilihPeran(peran) {
     document.getElementById("pt-dashboard-page").style.display = "none";
   }
 }
-document.getElementById("modal-peran").addEventListener("click", function (e) {
-  if (e.target === this) tutupModal();
-});
 
 // ─── NAVIGASI PEMOHON ────────────────────────────────────
 function showPP(nama) {
@@ -190,7 +187,9 @@ function pilihJenis(val) {
       return (
         '<div class="dok-item-form"><span>' +
         d +
-        '</span><input type="file" accept=".pdf" style="font-size:11px;color:var(--blue);cursor:pointer;border:none;background:none"/></div>'
+        '</span><input type="file" accept=".pdf" data-label="' +
+        d +
+        '" style="font-size:11px;color:var(--blue);cursor:pointer;border:none;background:none"/></div>'
       );
     })
     .join("");
@@ -221,19 +220,46 @@ async function kirimPermohonan() {
     }
     var fileInputs = document.querySelectorAll("#dok-list input[type=file]");
     var urlDokumen = [];
+    var uploadTasks = [];
     for (var i = 0; i < fileInputs.length; i++) {
-      var file = fileInputs[i].files[0];
-      if (file) {
-        var path = "pemohon/" + user.id + "/" + Date.now() + "_" + file.name;
-        var up = await db().storage.from("dokumen-ptsp").upload(path, file);
-        if (up.error) {
-          toast("Gagal upload file: " + file.name, "gagal");
-          return;
-        }
-        var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
-          .data.publicUrl;
-        urlDokumen.push({ nama: file.name, url: url });
+      if (fileInputs[i].files[0]) {
+        uploadTasks.push({
+          file: fileInputs[i].files[0],
+          label:
+            fileInputs[i].getAttribute("data-label") ||
+            fileInputs[i].files[0].name,
+          index: i,
+        });
       }
+    }
+    if (uploadTasks.length === 0) {
+      toast("Harap upload semua dokumen yang diperlukan!", "gagal");
+      return;
+    }
+    try {
+      urlDokumen = await Promise.all(
+        uploadTasks.map(async function (task) {
+          var path =
+            "pemohon/" +
+            user.id +
+            "/" +
+            Date.now() +
+            "_" +
+            task.index +
+            "_" +
+            task.file.name;
+          var up = await db()
+            .storage.from("dokumen-ptsp")
+            .upload(path, task.file);
+          if (up.error) throw new Error("Gagal upload: " + task.label);
+          var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
+            .data.publicUrl;
+          return { nama: task.label, url: url };
+        }),
+      );
+    } catch (eUp) {
+      toast(eUp.message, "gagal");
+      return;
     }
     var ins = await db()
       .from("permohonan")
@@ -443,17 +469,15 @@ async function bukaHalamanUlang(id) {
   idPermohonanDitolak = id;
   showPP("ulang");
 
-  // Reset dulu
   document.getElementById("ulang-dok-list").innerHTML = "";
   document.getElementById("ulang-notif-tolak").innerHTML = "";
   document.getElementById("captcha2").checked = false;
 
-  // Ambil data permohonan yang ditolak
   var r = await db().from("permohonan").select("*").eq("id", id).single();
   if (r.error || !r.data) return;
   var row = r.data;
 
-  // Tampilkan alasan penolakan
+  // Tampilkan catatan penolakan
   if (row.alasan_tolak || row.dokumen_tolak) {
     var notif = [];
     if (row.dokumen_tolak)
@@ -465,68 +489,59 @@ async function bukaHalamanUlang(id) {
       "</small></div>";
   }
 
-  // Tampilkan input file untuk semua dokumen sesuai jenis permohonan
-  var daftarDok = {
-    permintaan_data: [
-      "Surat permohonan (PDF)",
-      "KTP pemohon (PDF)",
-      "Surat keterangan instansi (PDF)",
-    ],
-    rohaniawan: [
-      "Surat permohonan (PDF)",
-      "KTP pemohon (PDF)",
-      "Surat undangan kegiatan (PDF)",
-    ],
-    permintaan_kesediaan: [
-      "Surat permohonan (PDF)",
-      "KTP pemohon (PDF)",
-      "Proposal kegiatan (PDF)",
-    ],
-    perubahan_sirup: [
-      "Surat permohonan (PDF)",
-      "KTP pemohon (PDF)",
-      "Dokumen SIRUP lama (PDF)",
-    ],
-    permohonan_rekomendasi: [
-      "Surat permohonan (PDF)",
-      "KTP pemohon (PDF)",
-      "Dokumen pendukung (PDF)",
-    ],
-  };
-  var dokList = daftarDok[row.jenis_layanan] || [];
-  var dokBermasalah = row.dokumen_tolak ? row.dokumen_tolak.split(", ") : [];
+  // Ambil daftar dokumen bermasalah (nama file asli)
+  var dokBermasalah = row.dokumen_tolak
+    ? row.dokumen_tolak.split(",").map(function (x) {
+        return x.trim();
+      })
+    : [];
 
-  document.getElementById("ulang-dok-list").innerHTML = dokList
-    .map(function (d) {
-      // Cek apakah dokumen ini termasuk yang bermasalah
-      var bermasalah = dokBermasalah.some(function (db) {
-        return (
-          d
-            .toLowerCase()
-            .indexOf(db.toLowerCase().replace(".pdf", "").trim()) !== -1 ||
-          db
-            .toLowerCase()
-            .indexOf(d.toLowerCase().replace(" (pdf)", "").trim()) !== -1
-        );
-      });
-      if (bermasalah) {
-        return (
-          '<div class="dok-item-err" style="flex-direction:column;align-items:flex-start;gap:6px">' +
-          "<span>" +
-          d +
-          " — perlu diperbaiki</span>" +
-          '<input type="file" accept=".pdf" style="font-size:11px;width:100%"/>' +
-          "</div>"
-        );
-      } else {
-        return (
-          '<div class="dok-item-ok"><span>' +
-          d +
-          '</span><span class="ok-badge">✓ Sudah diterima</span></div>'
-        );
-      }
-    })
-    .join("");
+  // Ambil semua dokumen yang pernah diupload pemohon
+  var semuaDok = [];
+  if (row.dokumen_upload) {
+    try {
+      semuaDok = JSON.parse(row.dokumen_upload);
+    } catch (e) {}
+  }
+
+  var html = "";
+
+  // Dokumen bermasalah → input upload
+  if (dokBermasalah.length > 0) {
+    dokBermasalah.forEach(function (nama) {
+      html +=
+        '<div class="dok-item-err" style="flex-direction:column;align-items:flex-start;gap:6px">' +
+        "<span>📄 " +
+        nama +
+        " — perlu diperbaiki</span>" +
+        '<input type="file" accept=".pdf" data-nama="' +
+        nama +
+        '" style="font-size:11px;width:100%"/>' +
+        "</div>";
+    });
+  }
+
+  // Dokumen tidak bermasalah → centang hijau
+  semuaDok.forEach(function (d) {
+    var isBermasalah = dokBermasalah.some(function (nama) {
+      return nama.toLowerCase() === d.nama.toLowerCase();
+    });
+    if (!isBermasalah) {
+      html +=
+        '<div class="dok-item-ok"><span>' +
+        d.nama +
+        '</span><span class="ok-badge">✓ Sudah diterima</span></div>';
+    }
+  });
+
+  // Kalau tidak ada data sama sekali
+  if (html === "") {
+    html =
+      '<div style="font-size:13px;color:var(--text-2);padding:8px 0">Upload dokumen ulang sesuai catatan penolakan.</div>' +
+      '<input type="file" accept=".pdf" style="font-size:11px;width:100%;margin-top:8px"/>';
+  }
+
+  document.getElementById("ulang-dok-list").innerHTML = html;
 }
 
 // ─── LOGIN PETUGAS ───────────────────────────────────────
@@ -752,6 +767,66 @@ async function bukaDetailPTById(id) {
       dokEl.innerHTML =
         '<div style="font-size:13px;color:var(--text-2);padding:8px 0">Tidak ada dokumen diupload.</div>';
     }
+    // Sinkronkan checkbox dokumen bermasalah dengan dokumen yang diupload pemohon
+    var cekList = document.getElementById("pt-cek-list");
+    if (row.dokumen_upload) {
+      try {
+        var dokArr = JSON.parse(row.dokumen_upload);
+        if (dokArr.length > 0) {
+          cekList.innerHTML = dokArr
+            .map(function (d) {
+              return (
+                '<label class="cek-item"><input type="checkbox" onchange="cekValidasiDok()"/> ' +
+                d.nama +
+                "</label>"
+              );
+            })
+            .join("");
+        }
+      } catch (e) {}
+    } else {
+      // Fallback pakai daftar dokumen sesuai jenis permohonan
+      var daftarDokPT = {
+        permintaan_data: [
+          "Surat permohonan.pdf",
+          "KTP pemohon.pdf",
+          "Surat keterangan instansi.pdf",
+        ],
+        rohaniawan: [
+          "Surat permohonan.pdf",
+          "KTP pemohon.pdf",
+          "Surat undangan kegiatan.pdf",
+        ],
+        permintaan_kesediaan: [
+          "Surat permohonan.pdf",
+          "KTP pemohon.pdf",
+          "Proposal kegiatan.pdf",
+        ],
+        perubahan_sirup: [
+          "Surat permohonan.pdf",
+          "KTP pemohon.pdf",
+          "Dokumen SIRUP lama.pdf",
+        ],
+        permohonan_rekomendasi: [
+          "Surat permohonan.pdf",
+          "KTP pemohon.pdf",
+          "Dokumen pendukung.pdf",
+        ],
+      };
+      var listDok = daftarDokPT[row.jenis_layanan] || [];
+      if (listDok.length > 0) {
+        cekList.innerHTML = listDok
+          .map(function (d) {
+            return (
+              '<label class="cek-item"><input type="checkbox" onchange="cekValidasiDok()"/> ' +
+              d +
+              "</label>"
+            );
+          })
+          .join("");
+      }
+    }
+
     document.getElementById("pt-action-area").style.display =
       sc === "menunggu" || sc === "diproses" ? "block" : "none";
     if (sc === "selesai" && row.url_hasil) {
@@ -1004,20 +1079,46 @@ async function kirimUlang() {
       "#ulang-dok-list input[type=file]",
     );
     var urlDokumen = [];
+    var uploadTasks2 = [];
     for (var i = 0; i < fileInputs.length; i++) {
-      var file = fileInputs[i].files[0];
-      if (file) {
-        var path =
-          "pemohon/" + user.id + "/" + Date.now() + "_" + i + "_" + file.name;
-        var up = await db().storage.from("dokumen-ptsp").upload(path, file);
-        if (up.error) {
-          toast("Gagal upload file: " + file.name, "gagal");
-          return;
-        }
-        var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
-          .data.publicUrl;
-        urlDokumen.push({ nama: file.name, url: url });
+      if (fileInputs[i].files[0]) {
+        uploadTasks2.push({
+          file: fileInputs[i].files[0],
+          label:
+            fileInputs[i].getAttribute("data-nama") ||
+            fileInputs[i].files[0].name,
+          index: i,
+        });
       }
+    }
+    if (uploadTasks2.length === 0) {
+      toast("Harap upload semua dokumen yang bermasalah!", "gagal");
+      return;
+    }
+    try {
+      urlDokumen = await Promise.all(
+        uploadTasks2.map(async function (task) {
+          var path =
+            "pemohon/" +
+            user.id +
+            "/" +
+            Date.now() +
+            "_" +
+            task.index +
+            "_" +
+            task.file.name;
+          var up = await db()
+            .storage.from("dokumen-ptsp")
+            .upload(path, task.file);
+          if (up.error) throw new Error("Gagal upload: " + task.label);
+          var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
+            .data.publicUrl;
+          return { nama: task.label, url: url };
+        }),
+      );
+    } catch (eUp) {
+      toast(eUp.message, "gagal");
+      return;
     }
     // Update permohonan lama bukan buat baru
     var updateData = {
@@ -1049,27 +1150,34 @@ async function kirimUlang() {
     btn.innerText = "Kirim ulang permohonan";
   }
 }
-// ─── CEK SESI OTOMATIS SAAT HALAMAN DIBUKA ───────────────
-(async function () {
-  var { data } = await db().auth.getSession();
-  if (data && data.session && data.session.user) {
-    var user = data.session.user;
-    var nama = user.user_metadata.full_name || "Pemohon";
-    document.getElementById("pemohon-wrap").style.display = "block";
-    document.getElementById("petugas-wrap").style.display = "none";
-    var nu = document.getElementById("nav-user-p");
-    nu.textContent = nama;
-    nu.style.display = "inline";
-    var nb = document.getElementById("nav-action-p");
-    nb.textContent = "Logout";
-    nb.onclick = async function () {
-      await db().auth.signOut();
-      nu.style.display = "none";
-      nb.textContent = "Login";
-      nb.onclick = bukaModal;
-      showPP("landing");
-    };
-    showPP("dashboard");
-    switchTabP("buat", document.getElementById("tab-buat"));
-  }
-})();
+document.addEventListener("DOMContentLoaded", function () {
+  document
+    .getElementById("modal-peran")
+    .addEventListener("click", function (e) {
+      if (e.target === this) tutupModal();
+    });
+
+  (async function () {
+    var { data } = await db().auth.getSession();
+    if (data && data.session && data.session.user) {
+      var user = data.session.user;
+      var nama = user.user_metadata.full_name || "Pemohon";
+      document.getElementById("pemohon-wrap").style.display = "block";
+      document.getElementById("petugas-wrap").style.display = "none";
+      var nu = document.getElementById("nav-user-p");
+      nu.textContent = nama;
+      nu.style.display = "inline";
+      var nb = document.getElementById("nav-action-p");
+      nb.textContent = "Logout";
+      nb.onclick = async function () {
+        await db().auth.signOut();
+        nu.style.display = "none";
+        nb.textContent = "Login";
+        nb.onclick = bukaModal;
+        showPP("landing");
+      };
+      showPP("dashboard");
+      switchTabP("buat", document.getElementById("tab-buat"));
+    }
+  })();
+});
