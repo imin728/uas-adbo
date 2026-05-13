@@ -3,16 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PTSP Kemenag Gorontalo - UAS ADBO</title>
+    <title>PTSP Kemenag Gorontalo</title>
     <link rel="stylesheet" href="style.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
+    <!-- MODAL PILIH PERAN -->
     <div class="modal-overlay" id="modal-peran">
       <div class="modal-box">
         <div class="modal-title">Masuk ke PTSP Kemenag Gorontalo</div>
@@ -33,23 +28,20 @@
       </div>
     </div>
 
-    <!-- ════════════ TAMPILAN PEMOHON ════════════ -->
+    <!-- ══════════ PEMOHON ══════════ -->
     <div class="main-wrap" id="pemohon-wrap">
       <div class="nav">
         <span class="nav-brand">PTSP Kemenag Gorontalo</span>
         <div class="nav-right">
-          <span class="nav-user" id="nav-user-p" style="display: none"
-            >Siti Rahma</span
-          >
+          <span class="nav-user" id="nav-user-p" style="display: none"></span>
           <button class="nav-btn" id="nav-action-p" onclick="bukaModal()">
             Login
           </button>
         </div>
       </div>
-
       <div class="wrap">
         <!-- LANDING -->
-        <div class="page active" id="pp-landing">
+        <div class="page" id="pp-landing" style="display: block">
           <div class="landing">
             <div class="landing-logo">🏛️</div>
             <div class="landing-title">
@@ -66,7 +58,7 @@
           </div>
         </div>
 
-        <!-- LOGIN PEMOHON -->
+        <!-- LOGIN -->
         <div class="page" id="pp-login">
           <div style="max-width: 360px; margin: 0 auto">
             <div class="card">
@@ -75,11 +67,19 @@
               </div>
               <div class="form-group">
                 <label>Email</label
-                ><input type="email" value="siti.rahma@gmail.com" />
+                ><input
+                  type="email"
+                  id="login-email"
+                  placeholder="email@gmail.com"
+                />
               </div>
               <div class="form-group">
                 <label>Password</label
-                ><input type="password" value="12345678" />
+                ><input
+                  type="password"
+                  id="login-pass"
+                  placeholder="••••••••"
+                />
               </div>
               <button
                 class="btn-primary"
@@ -105,7 +105,7 @@
           </div>
         </div>
 
-        <!-- REGISTER PEMOHON -->
+        <!-- REGISTER -->
         <div class="page" id="pp-register">
           <div style="max-width: 400px; margin: 0 auto">
             <div class="card">
@@ -115,24 +115,37 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>Nama lengkap</label
-                  ><input placeholder="Nama lengkap" />
+                  ><input id="reg-nama" placeholder="Nama lengkap" />
                 </div>
                 <div class="form-group">
-                  <label>NIK</label><input placeholder="16 digit NIK" />
+                  <label>NIK</label
+                  ><input id="reg-nik" placeholder="16 digit NIK" />
                 </div>
               </div>
               <div class="form-group">
                 <label>Email</label
-                ><input type="email" placeholder="email@gmail.com" />
+                ><input
+                  type="email"
+                  id="reg-email"
+                  placeholder="email@gmail.com"
+                />
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label>Password</label
-                  ><input type="password" placeholder="••••••••" />
+                  ><input
+                    type="password"
+                    id="reg-pass"
+                    placeholder="••••••••"
+                  />
                 </div>
                 <div class="form-group">
                   <label>Konfirmasi password</label
-                  ><input type="password" placeholder="••••••••" />
+                  ><input
+                    type="password"
+                    id="reg-confirm"
+                    placeholder="••••••••"
+                  />
                 </div>
               </div>
               <button class="btn-primary" onclick="doRegister()">
@@ -147,17 +160,24 @@
           </div>
         </div>
 
-        <!-- DASHBOARD PEMOHON -->
+        <!-- DASHBOARD -->
         <div class="page" id="pp-dashboard">
           <div class="nav-tabs">
-            <div class="nav-tab active" onclick="switchTabP('buat', this)">
+            <div
+              class="nav-tab active"
+              id="tab-buat"
+              onclick="switchTabP('buat', this)"
+            >
               Buat permohonan
             </div>
-            <div class="nav-tab" onclick="switchTabP('riwayat', this)">
+            <div
+              class="nav-tab"
+              id="tab-riwayat"
+              onclick="switchTabP('riwayat', this)"
+            >
               Riwayat permohonan
             </div>
           </div>
-
           <div id="ptab-buat">
             <div class="card">
               <div class="card-title">Form permohonan</div>
@@ -189,67 +209,35 @@
                     >Saya bukan robot</label
                   >
                 </div>
-                <button class="btn-primary" onclick="kirimPermohonan()">
+                <button
+                  class="btn-primary"
+                  id="btn-kirim-permohonan"
+                  onclick="kirimPermohonan()"
+                >
                   Kirim permohonan
                 </button>
               </div>
             </div>
           </div>
-
           <div id="ptab-riwayat" style="display: none">
-  <div class="card">
-    <div class="card-title">Riwayat permohonan</div>
-    
-    <div id="list-riwayat-supabase">
-       </div>
-
-    </div>
-</div>
-
-          <!--div id="ptab-riwayat" style="display: none">
             <div class="card">
               <div class="card-title">Riwayat permohonan</div>
-              <div class="riwayat-item" onclick="bukaDetailP('selesai')">
-                <div class="riwayat-head">
-                  <span class="riwayat-title">Permohonan Rekomendasi</span>
-                  <span class="badge selesai">Selesai</span>
-                </div>
-                <div class="riwayat-date">
-                  Diajukan: 01 Mei 2026 &nbsp;|&nbsp; No: PTSP/2026/004
-                </div>
-              </div>
-              <div class="riwayat-item" onclick="bukaDetailP('menunggu')">
-                <div class="riwayat-head">
-                  <span class="riwayat-title">Rohaniawan</span
-                  ><span class="badge menunggu">Menunggu verifikasi</span>
-                </div>
-                <div class="riwayat-date">
-                  Diajukan: 03 Mei 2026 &nbsp;|&nbsp; No: PTSP/2026/007
-                </div>
-              </div>
-              <div class="riwayat-item" onclick="bukaDetailP('tolak-dok')">
-                <div class="riwayat-head">
-                  <span class="riwayat-title">Permintaan Data</span
-                  ><span class="badge ditolak">Ditolak</span>
-                </div>
-                <div class="riwayat-date">
-                  Diajukan: 28 Apr 2026 &nbsp;|&nbsp; No: PTSP/2026/002
-                </div>
-              </div>
-              <div class="riwayat-item" onclick="bukaDetailP('tolak-non')">
-                <div class="riwayat-head">
-                  <span class="riwayat-title">Permintaan Kesediaan</span
-                  ><span class="badge ditolak">Ditolak</span>
-                </div>
-                <div class="riwayat-date">
-                  Diajukan: 25 Apr 2026 &nbsp;|&nbsp; No: PTSP/2026/001
-                </div>
+              <div id="list-riwayat-supabase">
+                <p
+                  style="
+                    text-align: center;
+                    padding: 20px;
+                    color: var(--text-2);
+                  "
+                >
+                  Memuat data...
+                </p>
               </div>
             </div>
           </div>
-        </div-->
-         
-        <!-- DETAIL PEMOHON -->
+        </div>
+
+        <!-- DETAIL -->
         <div class="page" id="pp-detail">
           <button class="back-btn" onclick="keRiwayatP()">
             ← Kembali ke riwayat
@@ -266,18 +254,6 @@
             <div class="card-title">Upload ulang dokumen</div>
             <div class="info-box">
               ℹ️ Hanya dokumen yang perlu diperbaiki yang perlu diupload ulang.
-              Dokumen lain sudah tersimpan.
-            </div>
-            <div
-              class="dok-syarat-title"
-              style="
-                font-size: 12px;
-                color: var(--text-2);
-                font-weight: 500;
-                margin-bottom: 8px;
-              "
-            >
-              Status dokumen
             </div>
             <div class="dok-item-ok">
               <span>Surat permohonan (PDF)</span
@@ -309,7 +285,11 @@
                   >Saya bukan robot</label
                 >
               </div>
-              <button class="btn-primary" onclick="kirimPermohonan()">
+              <button
+                class="btn-primary"
+                id="btn-kirim-ulang"
+                onclick="kirimUlang()"
+              >
                 Kirim ulang permohonan
               </button>
             </div>
@@ -336,11 +316,11 @@
           </div>
         </div>
       </div>
-      <!-- end wrap pemohon -->
+      <!-- end wrap -->
     </div>
     <!-- end pemohon-wrap -->
 
-    <!-- ════════════ TAMPILAN PETUGAS ════════════ -->
+    <!-- ══════════ PETUGAS ══════════ -->
     <div class="petugas-wrap" id="petugas-wrap">
       <!-- LOGIN PETUGAS -->
       <div id="pt-login-page">
@@ -350,7 +330,7 @@
             <button
               class="nav-btn"
               onclick="bukaModal()"
-              style="opacity: 0.8; font-size: 11px"
+              style="font-size: 11px"
             >
               ← Ganti peran
             </button>
@@ -415,8 +395,8 @@
                 Gunakan nama pengguna dan kata sandi yang diberikan admin sistem
               </div>
               <div class="form-group">
-                <label>Nama pengguna</label
-                ><input
+                <label>Nama pengguna</label>
+                <input
                   type="text"
                   id="pt-input-user"
                   placeholder="cth: ahmad.fauzi"
@@ -424,8 +404,8 @@
                 />
               </div>
               <div class="form-group">
-                <label>Kata sandi</label
-                ><input
+                <label>Kata sandi</label>
+                <input
                   type="password"
                   id="pt-input-pass"
                   placeholder="••••••••"
@@ -435,7 +415,11 @@
               <div class="login-err" id="pt-login-err">
                 Nama pengguna atau kata sandi salah.
               </div>
-              <button class="btn-primary" onclick="doLoginPetugas()">
+              <button
+                class="btn-primary"
+                id="btn-login-petugas"
+                onclick="doLoginPetugas()"
+              >
                 Masuk
               </button>
             </div>
@@ -453,7 +437,6 @@
             <button class="nav-btn" onclick="doLogoutPetugas()">Logout</button>
           </div>
         </div>
-
         <div
           style="
             background: var(--bg2);
@@ -464,22 +447,21 @@
           <div class="stats">
             <div class="stat">
               <div class="stat-label">Total permohonan</div>
-              <div class="stat-val blue">24</div>
+              <div class="stat-val blue" id="stat-total">—</div>
             </div>
             <div class="stat">
               <div class="stat-label">Menunggu verifikasi</div>
-              <div class="stat-val amber">8</div>
+              <div class="stat-val amber" id="stat-menunggu">—</div>
             </div>
             <div class="stat">
               <div class="stat-label">Selesai</div>
-              <div class="stat-val teal">13</div>
+              <div class="stat-val teal" id="stat-selesai">—</div>
             </div>
             <div class="stat">
               <div class="stat-label">Ditolak</div>
-              <div class="stat-val coral">3</div>
+              <div class="stat-val coral" id="stat-ditolak">—</div>
             </div>
           </div>
-
           <div class="card" id="pt-table-card">
             <div class="card-head">
               <span class="card-title">Daftar permohonan masuk</span>
@@ -509,142 +491,12 @@
                 </tr>
               </thead>
               <tbody id="pt-tabel-body">
-                <tr data-status="menunggu">
-                  <td>001</td>
-                  <td>Siti Rahma</td>
-                  <td>Permohonan Rekomendasi</td>
-                  <td>03 Mei 2026</td>
-                  <td>
-                    <span class="badge menunggu">Menunggu verifikasi</span>
-                  </td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Siti Rahma',
-                          'Permohonan Rekomendasi',
-                          'menunggu',
-                          false,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
-                  </td>
-                </tr>
-                <tr data-status="menunggu">
-                  <td>002</td>
-                  <td>Baharuddin</td>
-                  <td>Rohaniawan</td>
-                  <td>03 Mei 2026</td>
-                  <td>
-                    <span class="badge menunggu">Menunggu verifikasi</span>
-                  </td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Baharuddin',
-                          'Rohaniawan',
-                          'menunggu',
-                          false,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
-                  </td>
-                </tr>
-                <tr data-status="diproses">
-                  <td>003</td>
-                  <td>Nurlaila Hasan</td>
-                  <td>Permintaan Kesediaan</td>
-                  <td>02 Mei 2026</td>
-                  <td><span class="badge diproses">Sedang diproses</span></td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Nurlaila Hasan',
-                          'Permintaan Kesediaan',
-                          'diproses',
-                          false,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
-                  </td>
-                </tr>
-                <tr data-status="selesai">
-                  <td>004</td>
-                  <td>Abdul Karim</td>
-                  <td>Permohonan Rekomendasi</td>
-                  <td>01 Mei 2026</td>
-                  <td><span class="badge selesai">Selesai</span></td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Abdul Karim',
-                          'Permohonan Rekomendasi',
-                          'selesai',
-                          false,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
-                  </td>
-                </tr>
-                <tr data-status="ditolak">
-                  <td>005</td>
-                  <td>Fatimah Djafar</td>
-                  <td>Permintaan Data</td>
-                  <td>30 Apr 2026</td>
-                  <td><span class="badge ditolak">Ditolak</span></td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Fatimah Djafar',
-                          'Permintaan Data',
-                          'ditolak',
-                          false,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
-                  </td>
-                </tr>
-                <tr data-status="menunggu">
-                  <td>006</td>
-                  <td>Fatimah Djafar <span class="tag-revisi">Revisi</span></td>
-                  <td>Permintaan Data</td>
-                  <td>04 Mei 2026</td>
-                  <td>
-                    <span class="badge menunggu">Menunggu verifikasi</span>
-                  </td>
-                  <td>
-                    <button
-                      class="btn-buka"
-                      onclick="
-                        bukaDetailPT(
-                          'Fatimah Djafar',
-                          'Permintaan Data',
-                          'menunggu',
-                          true,
-                        )
-                      "
-                    >
-                      Buka
-                    </button>
+                <tr>
+                  <td
+                    colspan="6"
+                    style="text-align: center; padding: 20px; color: #888"
+                  >
+                    Memuat data...
                   </td>
                 </tr>
               </tbody>
@@ -662,26 +514,24 @@
               </div>
               <span class="badge" id="pt-detail-badge"></span>
             </div>
-
             <div class="info-grid">
               <div class="info-item">
                 <label>NIK</label>
-                <p>7471234567890001</p>
+                <p id="pt-info-nik">—</p>
               </div>
               <div class="info-item">
                 <label>Email</label>
-                <p>pemohon@gmail.com</p>
+                <p id="pt-info-email">—</p>
               </div>
               <div class="info-item">
                 <label>Tanggal masuk</label>
-                <p>03 Mei 2026</p>
+                <p id="pt-info-tgl">—</p>
               </div>
               <div class="info-item">
                 <label>No. permohonan</label>
-                <p>PTSP/2026/001</p>
+                <p id="pt-info-no">—</p>
               </div>
             </div>
-
             <div class="dok-list">
               <div class="dok-title">Dokumen yang diupload</div>
               <div class="dok-item">
@@ -697,12 +547,10 @@
                 ><span class="dok-link">Lihat dokumen</span>
               </div>
             </div>
-
             <div class="riwayat-box" id="pt-riwayat-box" style="display: none">
               <div class="riwayat-box-label">Riwayat penolakan sebelumnya</div>
               <div class="riwayat-item-p" id="pt-riwayat-isi"></div>
             </div>
-
             <div class="action-area" id="pt-action-area">
               <div class="action-title">Tindakan verifikasi</div>
               <div class="action-btns">
@@ -713,8 +561,6 @@
                   ✕ Tolak permohonan
                 </button>
               </div>
-
-              <!-- Form Setujui -->
               <div class="acc-form" id="pt-acc-form">
                 <label
                   >Upload dokumen hasil
@@ -724,18 +570,10 @@
                   <p>Seret file ke sini atau</p>
                   <span>klik untuk memilih file</span>
                 </div>
-                <button
-                  class="btn-kirim-acc"
-                  onclick="
-                    alert('Permohonan berhasil disetujui!');
-                    kembaliPT();
-                  "
-                >
+                <button class="btn-kirim-acc" onclick="kirimSetujui()">
                   Kirim persetujuan
                 </button>
               </div>
-
-              <!-- Form Tolak -->
               <div class="tolak-form" id="pt-tolak-form">
                 <div class="tolak-type-row">
                   <button
@@ -753,7 +591,6 @@
                     ⚠️ Non Dokumen Bermasalah
                   </button>
                 </div>
-
                 <div class="tolak-panel" id="pt-panel-dokumen">
                   <label
                     >Dokumen bermasalah
@@ -797,7 +634,6 @@
                     Kirim penolakan
                   </button>
                 </div>
-
                 <div class="tolak-panel" id="pt-panel-nondokumen">
                   <label
                     >Kategori penolakan
@@ -845,10 +681,12 @@
           </div>
         </div>
       </div>
-      <!-- end pt-dashboard-page -->
     </div>
     <!-- end petugas-wrap -->
 
+    <div class="petugas-wrap" id="petugas-wrap" style="display: none"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
   </body>
 </html>

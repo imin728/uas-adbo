@@ -1,22 +1,3 @@
-/* style.css */
-:root {
-  --primary: #0d9488; /* Teal 600 */
-  --primary-dark: #0f766e;
-  --secondary: #0f172a; /* Slate 900 */
-  --bg-light: #f8fafc;
-  --white: #ffffff;
-  --border: #e2e8f0;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --coral: #fb7185;
-  --amber: #f59e0b;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 :root {
   --blue: #185fa5;
   --blue-dark: #0c447c;
@@ -41,13 +22,18 @@
   --radius: 8px;
   --radius-sm: 6px;
 }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 body {
   font-family: system-ui, sans-serif;
   background: var(--bg);
   padding: 20px;
 }
 
-/* ── NAVBAR ── */
+/* NAV */
 .nav {
   background: var(--blue);
   padding: 12px 20px;
@@ -76,8 +62,6 @@ body {
   color: #fff;
   padding: 2px 7px;
   border-radius: 20px;
-  margin-left: 6px;
-  vertical-align: middle;
 }
 .nav-btn {
   background: rgba(255, 255, 255, 0.15);
@@ -87,27 +71,40 @@ body {
   border-radius: var(--radius-sm);
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.15s;
 }
 .nav-btn:hover {
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* ── WRAP ── */
+/* WRAP */
 .wrap {
   background: var(--bg2);
   padding: 20px;
   border-radius: 0 0 var(--radius) var(--radius);
   min-height: 400px;
 }
+.main-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+}
+.petugas-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  display: none;
+}
+
+/* PAGE - default semua tersembunyi */
 .page {
   display: none;
 }
-.page.active {
-  display: block;
-}
 
-/* ── MODAL OVERLAY ── */
+/* MODAL */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -127,17 +124,6 @@ body {
   width: 100%;
   max-width: 380px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-  animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.88);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 .modal-title {
   font-size: 16px;
@@ -170,8 +156,6 @@ body {
 .role-card:hover {
   border-color: var(--blue);
   background: var(--blue-light);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(24, 95, 165, 0.15);
 }
 .role-icon {
   font-size: 30px;
@@ -196,11 +180,8 @@ body {
   color: var(--text-3);
   cursor: pointer;
 }
-.modal-cancel:hover {
-  color: var(--text);
-}
 
-/* ── LANDING (belum login) ── */
+/* LANDING */
 .landing {
   text-align: center;
   padding: 40px 20px;
@@ -238,13 +219,12 @@ body {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
 }
 .landing-btn:hover {
   background: var(--blue-dark);
 }
 
-/* ── CARD ── */
+/* CARD */
 .card {
   background: #fff;
   border: 0.5px solid var(--border);
@@ -265,7 +245,7 @@ body {
   margin-bottom: 14px;
 }
 
-/* ── FORM ── */
+/* FORM */
 .form-group {
   margin-bottom: 14px;
 }
@@ -321,9 +301,6 @@ body {
   cursor: pointer;
   width: 100%;
 }
-.btn-secondary:hover {
-  background: #f5f5f5;
-}
 .link {
   color: var(--blue);
   font-size: 13px;
@@ -347,7 +324,7 @@ body {
   display: block;
 }
 
-/* ── BADGE ── */
+/* BADGE */
 .badge {
   display: inline-block;
   padding: 3px 10px;
@@ -384,10 +361,9 @@ body {
   vertical-align: middle;
 }
 
-/* ── TABS ── */
+/* TABS */
 .nav-tabs {
   display: flex;
-  gap: 0;
   border-bottom: 0.5px solid var(--border);
   margin-bottom: 16px;
 }
@@ -404,7 +380,7 @@ body {
   font-weight: 500;
 }
 
-/* ── RIWAYAT PEMOHON ── */
+/* RIWAYAT */
 .riwayat-item {
   border: 0.5px solid var(--border);
   border-radius: var(--radius-sm);
@@ -432,7 +408,7 @@ body {
   color: var(--text-2);
 }
 
-/* ── DOK UPLOAD ── */
+/* DOK UPLOAD */
 .dok-syarat {
   margin-bottom: 16px;
 }
@@ -470,10 +446,6 @@ body {
   border-radius: var(--radius-sm);
   margin-bottom: 6px;
   background: #f0faf5;
-}
-.dok-item-ok span {
-  font-size: 13px;
-  color: var(--text-2);
 }
 .ok-badge {
   font-size: 11px;
@@ -523,7 +495,7 @@ body {
   color: var(--text);
 }
 
-/* ── DETAIL PEMOHON ── */
+/* DETAIL PEMOHON */
 .detail-info {
   background: #f5f5f5;
   border-radius: var(--radius-sm);
@@ -579,9 +551,6 @@ body {
   font-weight: 500;
   cursor: pointer;
 }
-.btn-ulang:hover {
-  background: #f5c4b3;
-}
 .dok-unduh {
   display: flex;
   justify-content: space-between;
@@ -590,10 +559,6 @@ body {
   border: 0.5px solid var(--border);
   border-radius: var(--radius-sm);
   margin-bottom: 6px;
-}
-.dok-unduh span {
-  font-size: 13px;
-  color: var(--text);
 }
 .btn-unduh {
   background: var(--teal-light);
@@ -604,9 +569,6 @@ body {
   font-size: 12px;
   cursor: pointer;
   font-weight: 500;
-}
-.btn-unduh:hover {
-  background: #9fe1cb;
 }
 .info-box {
   background: #eef5fd;
@@ -630,7 +592,7 @@ body {
   color: var(--text);
 }
 
-/* ── SUCCESS ── */
+/* SUCCESS */
 .success-wrap {
   text-align: center;
   padding: 20px 0;
@@ -658,7 +620,7 @@ body {
   margin-bottom: 20px;
 }
 
-/* ── PETUGAS: STATS ── */
+/* PETUGAS STATS */
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -679,7 +641,6 @@ body {
 .stat-val {
   font-size: 22px;
   font-weight: 500;
-  color: var(--text);
 }
 .stat-val.blue {
   color: var(--blue);
@@ -694,7 +655,7 @@ body {
   color: var(--coral);
 }
 
-/* ── PETUGAS: TABLE ── */
+/* TABLE */
 .filter {
   display: flex;
   gap: 8px;
@@ -753,7 +714,7 @@ tr:hover td {
   background: var(--blue-light);
 }
 
-/* ── PETUGAS: DETAIL ── */
+/* DETAIL PETUGAS */
 .detail-wrap {
   background: #fff;
   border: 0.5px solid var(--border);
@@ -853,9 +814,6 @@ tr:hover td {
   cursor: pointer;
   flex: 1;
 }
-.btn-acc:hover {
-  background: #9fe1cb;
-}
 .btn-tolak {
   background: var(--coral-light);
   color: #712b13;
@@ -866,9 +824,6 @@ tr:hover td {
   font-weight: 500;
   cursor: pointer;
   flex: 1;
-}
-.btn-tolak:hover {
-  background: #f5c4b3;
 }
 .riwayat-box {
   background: var(--amber-light);
@@ -914,11 +869,6 @@ tr:hover td {
   font-weight: 500;
   cursor: pointer;
   text-align: center;
-  transition: all 0.15s;
-}
-.tolak-type-btn:hover {
-  border-color: var(--red);
-  color: #712b13;
 }
 .tolak-type-btn.active {
   background: var(--coral-light);
@@ -982,9 +932,6 @@ tr:hover td {
   font-weight: 500;
   cursor: pointer;
 }
-.btn-kirim-tolak:hover {
-  background: var(--coral);
-}
 .btn-kirim-tolak:disabled {
   background: #e0a080;
   cursor: not-allowed;
@@ -1033,41 +980,4 @@ tr:hover td {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-}
-.btn-kirim-acc:hover {
-  background: var(--teal-dark);
-}
-.tolak-separator {
-  font-size: 11px;
-  color: var(--text-2);
-  text-align: center;
-  margin: 12px 0 10px;
-  position: relative;
-}
-.tolak-separator::before,
-.tolak-separator::after {
-  content: "";
-  display: inline-block;
-  width: 36%;
-  height: 0.5px;
-  background: var(--border);
-  vertical-align: middle;
-  margin: 0 6px;
-}
-
-/* ── WRAPPER UTAMA ── */
-.main-wrap {
-  max-width: 600px;
-  margin: 0 auto;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 0.5px solid var(--border);
-}
-.petugas-wrap {
-  max-width: 800px;
-  margin: 0 auto;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 0.5px solid var(--border);
-  display: none;
 }

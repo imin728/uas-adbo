@@ -1,27 +1,19 @@
-// 1. Inisialisasi Database
-// Perhatian: /rest/v1/ dihapus agar SDK bisa bekerja dengan benar
-const SUPABASE_URL = "https://sjykqwkdsubugqxyavyr.supabase.co";
-
-const SUPABASE_KEY =
+// ─── SUPABASE ───────────────────────────────────────────
+var SURL = "https://sjykqwkdsubugqxyavyr.supabase.co";
+var SKEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeWtxd2tkc3VidWdxeHlhdnlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1OTMzNDYsImV4cCI6MjA5NDE2OTM0Nn0.NEH3Xq8V_UsnnzFB2zzuLEBkDcV9UrMI6lLQeBoFaJE";
+var _db = null;
+function db() {
+  if (!_db) _db = supabase.createClient(SURL, SKEY);
+  return _db;
+}
 
-// Pastikan variabel 'supabase' (huruf kecil) dibuat dari objek 'supabase' (library)
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Tambahkan ini di baris pertama script.js
-document.addEventListener("DOMContentLoaded", () => {
-  if (typeof lucide !== "undefined") {
-    lucide.createIcons();
-  }
-});
-
-// ... baru masukkan kode function bukaModal() dan seterusnya ...
-
+// ─── MODAL PERAN ─────────────────────────────────────────
 function bukaModal() {
-  document.getElementById("modal-peran").classList.add("open");
+  document.getElementById("modal-peran").style.display = "flex";
 }
 function tutupModal() {
-  document.getElementById("modal-peran").classList.remove("open");
+  document.getElementById("modal-peran").style.display = "none";
 }
 function pilihPeran(peran) {
   tutupModal();
@@ -36,9 +28,102 @@ function pilihPeran(peran) {
     document.getElementById("pt-dashboard-page").style.display = "none";
   }
 }
+document.getElementById("modal-peran").addEventListener("click", function (e) {
+  if (e.target === this) tutupModal();
+});
 
-/* ══ PEMOHON ══ */
-const dokumen = {
+// ─── NAVIGASI PEMOHON ────────────────────────────────────
+function showPP(nama) {
+  document.querySelectorAll("#pemohon-wrap .page").forEach(function (el) {
+    el.style.display = "none";
+  });
+  var t = document.getElementById("pp-" + nama);
+  if (t) t.style.display = "block";
+}
+
+// ─── TAB ─────────────────────────────────────────────────
+function switchTabP(tab, elTab) {
+  document.querySelectorAll("#pemohon-wrap .nav-tab").forEach(function (t) {
+    t.classList.remove("active");
+  });
+  elTab.classList.add("active");
+  document.getElementById("ptab-buat").style.display =
+    tab === "buat" ? "block" : "none";
+  document.getElementById("ptab-riwayat").style.display =
+    tab === "riwayat" ? "block" : "none";
+  if (tab === "riwayat") loadRiwayat();
+}
+
+// ─── LOGIN PEMOHON ───────────────────────────────────────
+async function doLoginPemohon() {
+  var email = document.getElementById("login-email").value.trim();
+  var pass = document.getElementById("login-pass").value;
+  if (!email || !pass) {
+    alert("Email dan password harus diisi!");
+    return;
+  }
+  var btn = document.querySelector("#pp-login .btn-primary");
+  btn.disabled = true;
+  btn.innerText = "Memverifikasi...";
+  var r = await db().auth.signInWithPassword({ email: email, password: pass });
+  btn.disabled = false;
+  btn.innerText = "Masuk";
+  if (r.error) {
+    alert("Login gagal: " + r.error.message);
+    return;
+  }
+  var nama = r.data.user.user_metadata.full_name || "Pemohon";
+  var nu = document.getElementById("nav-user-p");
+  nu.textContent = nama;
+  nu.style.display = "inline";
+  var nb = document.getElementById("nav-action-p");
+  nb.textContent = "Logout";
+  nb.onclick = async function () {
+    await db().auth.signOut();
+    nu.style.display = "none";
+    nb.textContent = "Login";
+    nb.onclick = bukaModal;
+    showPP("landing");
+  };
+  showPP("dashboard");
+  switchTabP("buat", document.getElementById("tab-buat"));
+}
+
+// ─── REGISTER ────────────────────────────────────────────
+async function doRegister() {
+  var nama = document.getElementById("reg-nama").value.trim();
+  var nik = document.getElementById("reg-nik").value.trim();
+  var email = document.getElementById("reg-email").value.trim();
+  var pass = document.getElementById("reg-pass").value;
+  var confirm = document.getElementById("reg-confirm").value;
+  if (!nama || !email || !pass) {
+    alert("Nama, Email, dan Password wajib diisi!");
+    return;
+  }
+  if (pass !== confirm) {
+    alert("Password tidak sama!");
+    return;
+  }
+  var btn = document.querySelector("#pp-register .btn-primary");
+  btn.disabled = true;
+  btn.innerText = "Mendaftarkan...";
+  var r = await db().auth.signUp({
+    email: email,
+    password: pass,
+    options: { data: { full_name: nama, nik: nik } },
+  });
+  btn.disabled = false;
+  btn.innerText = "Daftar sekarang";
+  if (r.error) {
+    alert("Gagal daftar: " + r.error.message);
+    return;
+  }
+  alert("Berhasil daftar! Silakan masuk.");
+  showPP("login");
+}
+
+// ─── FORM PERMOHONAN ─────────────────────────────────────
+var dokumen = {
   permintaan_data: [
     "Surat permohonan (PDF)",
     "KTP pemohon (PDF)",
@@ -65,402 +150,265 @@ const dokumen = {
     "Dokumen pendukung (PDF)",
   ],
 };
-function showPP(p) {
-  // 1. Ambil semua halaman
-  const pages = document.querySelectorAll("#pemohon-wrap .page");
-
-  // 2. Sembunyikan semua (Hapus class active)
-  pages.forEach((x) => {
-    x.classList.remove("active");
-    x.style.display = "none"; // Tambahan biar pasti sembunyi
-  });
-
-  // 3. Munculkan halaman yang dipilih
-  const target = document.getElementById("pp-" + p);
-  if (target) {
-    target.classList.add("active");
-    target.style.display = "block"; // Tambahan biar pasti muncul
-  } else {
-    console.error("ID pp-" + p + " tidak ditemukan di HTML!");
-  }
-}
-async function doLoginPemohon() {
-  const email = document.querySelector("#pp-login input[type='email']").value;
-  const password = document.querySelector(
-    "#pp-login input[type='password']",
-  ).value;
-  const btn = event.target;
-
-  if (!email || !password) {
-    alert("Email dan password harus diisi!");
-    return;
-  }
-
-  const teksAsli = btn.innerText;
-  btn.innerText = "Memverifikasi...";
-  btn.disabled = true;
-
-  // LOGIN KE SUPABASE
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password,
-  });
-
-  if (error) {
-    alert("Login Gagal: " + error.message);
-    btn.innerText = teksAsli;
-    btn.disabled = false;
-  } else {
-    // AMBIL NAMA DARI METADATA
-    const userNama = data.user.user_metadata.full_name || "Pemohon";
-
-    const navUser = document.getElementById("nav-user-p");
-    navUser.textContent = userNama;
-    navUser.style.display = "inline";
-
-    const navBtn = document.getElementById("nav-action-p");
-    navBtn.textContent = "Logout";
-    navBtn.onclick = async () => {
-      await supabaseClient.auth.signOut(); // Logout dari Supabase juga
-      navUser.style.display = "none";
-      navBtn.textContent = "Login";
-      navBtn.onclick = bukaModal;
-      showPP("landing");
-    };
-
-    showPP("dashboard");
-    switchTabP("buat", document.querySelectorAll("#pemohon-wrap .nav-tab")[0]);
-  }
-}
-function switchTabP(tab, el) {
-  document
-    .querySelectorAll("#pemohon-wrap .nav-tab")
-    .forEach((t) => t.classList.remove("active"));
-  el.classList.add("active");
-  document.getElementById("ptab-buat").style.display =
-    tab === "buat" ? "block" : "none";
-  document.getElementById("ptab-riwayat").style.display =
-    tab === "riwayat" ? "block" : "none";
-
-  if (tab === "riwayat") {
-    loadRiwayat();
-  }
-}
 function pilihJenis(val) {
-  const wrap = document.getElementById("syarat-wrap");
-  const list = document.getElementById("dok-list");
+  var wrap = document.getElementById("syarat-wrap");
+  var list = document.getElementById("dok-list");
   if (!val) {
     wrap.style.display = "none";
     return;
   }
   wrap.style.display = "block";
   list.innerHTML = (dokumen[val] || [])
-    .map(
-      (d) =>
-        `<div class="dok-item-form"><span>${d}</span><small>Pilih file</small></div>`,
-    )
+    .map(function (d) {
+      return (
+        '<div class="dok-item-form"><span>' +
+        d +
+        "</span><small>Pilih file</small></div>"
+      );
+    })
     .join("");
 }
-async function kirimPermohonan() {
-  const cek = document.getElementById("captcha");
-  const layananSelect = document.getElementById("pilih-layanan");
-  const btn = event.currentTarget;
 
+async function kirimPermohonan() {
+  var cek = document.getElementById("captcha");
+  var sel = document.getElementById("pilih-layanan");
   if (!cek || !cek.checked) {
     alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
     return;
   }
-
-  const jenisLayanan = layananSelect.value;
-  if (!jenisLayanan) {
+  var jenis = sel ? sel.value : "";
+  if (!jenis) {
     alert("Harap pilih jenis layanan terlebih dahulu!");
     return;
   }
-
-  const teksAsli = btn.innerText;
+  var btn = document.getElementById("btn-kirim-permohonan");
   btn.disabled = true;
   btn.innerText = "Sedang Mengirim...";
-
   try {
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
+    var ur = await db().auth.getUser();
+    var user = ur.data.user;
     if (!user) {
       alert("Sesi berakhir, silakan login kembali.");
       showPP("login");
       return;
     }
-
-    // Insert ke Supabase
-    const { error } = await supabaseClient.from("permohonan").insert([
-      {
-        user_id: user.id,
-        nama_pemohon: user.user_metadata.full_name,
-        nik: user.user_metadata.nik,
-        jenis_layanan: jenisLayanan,
-        alasan: "-",
-        status: "Pending",
-      },
-    ]);
-
-    if (error) throw error;
-
-    // --- BAGIAN SUKSES ---
-    // 1. Reset Form secara aman (pakai optional chaining agar tidak error jika id tidak ada)
-    if (cek) cek.checked = false;
-    if (layananSelect) layananSelect.value = "";
-    const syaratWrap = document.getElementById("syarat-wrap");
-    if (syaratWrap) syaratWrap.style.display = "none";
-
-    // 2. Pindah ke layar sukses (ikon centang)
-    if (typeof showPP === "function") {
-      showPP("sukses");
-    } else {
-      alert("Permohonan Berhasil Dikirim!");
+    var ins = await db()
+      .from("permohonan")
+      .insert([
+        {
+          user_id: user.id,
+          nama_pemohon: user.user_metadata.full_name,
+          nik: user.user_metadata.nik,
+          email: user.email,
+          jenis_layanan: jenis,
+          alasan: "-",
+          status: "Pending",
+        },
+      ]);
+    if (ins.error) {
+      alert("Gagal mengirim: " + ins.error.message);
+      return;
     }
-
-    // Reset Form
     cek.checked = false;
-    layananSelect.value = "";
+    sel.value = "";
     document.getElementById("syarat-wrap").style.display = "none";
-  } catch (error) {
-    console.error("Error pas kirim:", error);
-
-    // Cek apakah error karena kolom tidak ada di database
-    if (error.message && error.message.includes("column")) {
-      // Data tetap anggap berhasil, tampilkan sukses
-      if (cek) cek.checked = false;
-      if (layananSelect) layananSelect.value = "";
-      const sw = document.getElementById("syarat-wrap");
-      if (sw) sw.style.display = "none";
-      showPP("sukses");
-    } else {
-      alert("Gagal mengirim: " + error.message);
-    }
+    document.getElementById("dok-list").innerHTML = "";
+    showPP("sukses");
+  } catch (e) {
+    alert("Kesalahan: " + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerText = teksAsli;
+    btn.innerText = "Kirim permohonan";
   }
 }
+
+// ─── RIWAYAT PEMOHON ─────────────────────────────────────
 async function loadRiwayat() {
-  const container = document.getElementById("list-riwayat-supabase");
-  if (!container) return;
-
+  var c = document.getElementById("list-riwayat-supabase");
+  c.innerHTML =
+    '<p style="text-align:center;padding:20px;color:#888">Memuat data...</p>';
   try {
-    // Ambil user yang login
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
+    var ur = await db().auth.getUser();
+    var user = ur.data.user;
     if (!user) return;
-
-    // Tarik data dari tabel permohonan milik user tersebut
-    const { data, error } = await supabaseClient
+    var r = await db()
       .from("permohonan")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    console.log("Data dari Supabase:", data); // Lihat di F12 apakah data muncul
-
-    container.innerHTML = ""; // Bersihkan loading
-
-    if (data.length === 0) {
-      container.innerHTML =
-        "<p style='text-align:center; padding:20px;'>Belum ada permohonan.</p>";
+    if (r.error) throw r.error;
+    var data = r.data;
+    if (!data || data.length === 0) {
+      c.innerHTML =
+        '<p style="text-align:center;padding:20px;color:#888">Belum ada permohonan.</p>';
       return;
     }
-
-    // Tampilkan data ke dalam list
-    data.forEach((row) => {
-      let statusClass = row.status.toLowerCase();
-      // Sesuaikan class badge jika di CSS kamu namanya beda
-      if (statusClass === "pending") statusClass = "menunggu";
-
-      container.innerHTML += `
-        <div class="riwayat-item" onclick="bukaDetailP('${statusClass}', '${row.id}')">
-          <div class="riwayat-head">
-            <span class="riwayat-title">${row.jenis_layanan.replace(/_/g, " ").toUpperCase()}</span>
-            <span class="badge ${statusClass}">${row.status}</span>
-          </div>
-          <div class="riwayat-date">
-            Diajukan: ${new Date(row.created_at).toLocaleDateString("id-ID")} | No: ${row.id}
-          </div>
-        </div>
-      `;
-    });
-  } catch (err) {
-    console.error("Gagal load riwayat:", err);
+    c.innerHTML = data
+      .map(function (row) {
+        var sc = "menunggu",
+          sl = "Menunggu verifikasi";
+        var s = (row.status || "").toLowerCase();
+        if (s === "pending") {
+          sc = "menunggu";
+          sl = "Menunggu verifikasi";
+        }
+        if (s === "diproses") {
+          sc = "diproses";
+          sl = "Sedang diproses";
+        }
+        if (s === "selesai") {
+          sc = "selesai";
+          sl = "Selesai";
+        }
+        if (s === "ditolak") {
+          sc = "ditolak";
+          sl = "Ditolak";
+        }
+        var tgl = new Date(row.created_at).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        var judul = (row.jenis_layanan || "")
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, function (x) {
+            return x.toUpperCase();
+          });
+        return (
+          '<div class="riwayat-item" onclick="bukaDetailP(\'' +
+          sc +
+          "','" +
+          row.id +
+          "')\">" +
+          '<div class="riwayat-head"><span class="riwayat-title">' +
+          judul +
+          "</span>" +
+          '<span class="badge ' +
+          sc +
+          '">' +
+          sl +
+          "</span></div>" +
+          '<div class="riwayat-date">Diajukan: ' +
+          tgl +
+          " &nbsp;|&nbsp; No: PTSP/2026/" +
+          String(row.id).padStart(3, "0") +
+          "</div></div>"
+        );
+      })
+      .join("");
+  } catch (e) {
+    c.innerHTML =
+      '<p style="text-align:center;padding:20px;color:#c0392b">Gagal memuat data.</p>';
   }
 }
-function keRiwayatP() {
-  // 1. Balik ke dashboard utama
-  showPP("dashboard");
 
-  // 2. Ambil semua elemen tab
-  const tabs = document.querySelectorAll("#pemohon-wrap .nav-tab");
-
-  // 3. Cari tab yang tulisannya mengandung kata "Riwayat"
-  let tabRiwayat;
-  tabs.forEach((t) => {
-    if (t.innerText.toLowerCase().includes("riwayat")) {
-      tabRiwayat = t;
-    }
-  });
-
-  // 4. Jalankan ganti tab dan load data
-  if (tabRiwayat) {
-    switchTabP("riwayat", tabRiwayat);
-    // Panggil loadRiwayat untuk narik data dari Supabase
-    if (typeof loadRiwayat === "function") {
-      loadRiwayat();
-    }
-  }
-}
-function bukaDetailP(status) {
-  const el = document.getElementById("detail-card-p");
-  if (status === "selesai") {
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
-        <div><div style="font-size:15px;font-weight:500">Permohonan Rekomendasi</div><div style="font-size:12px;color:var(--text-2);margin-top:2px">No: PTSP/2026/004 &nbsp;|&nbsp; 01 Mei 2026</div></div>
-        <span class="badge selesai">Selesai</span>
-      </div>
-      <div class="detail-info">
-        <div class="detail-row"><span>Nama</span><span>Siti Rahma</span></div>
-        <div class="detail-row"><span>NIK</span><span>7471234567890001</span></div>
-        <div class="detail-row"><span>Jenis</span><span>Permohonan Rekomendasi</span></div>
-        <div class="detail-row"><span>Status</span><span style="color:#085041">Selesai</span></div>
-      </div>
-      <div style="font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px">Dokumen hasil</div>
-      <div class="dok-unduh"><span>Surat rekomendasi.pdf</span><button class="btn-unduh">Unduh</button></div>`;
-  } else if (status === "menunggu") {
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
-        <div><div style="font-size:15px;font-weight:500">Rohaniawan</div><div style="font-size:12px;color:var(--text-2);margin-top:2px">No: PTSP/2026/007 &nbsp;|&nbsp; 03 Mei 2026</div></div>
-        <span class="badge menunggu">Menunggu verifikasi</span>
-      </div>
-      <div class="detail-info">
-        <div class="detail-row"><span>Nama</span><span>Siti Rahma</span></div>
-        <div class="detail-row"><span>NIK</span><span>7471234567890001</span></div>
-        <div class="detail-row"><span>Jenis</span><span>Rohaniawan</span></div>
-        <div class="detail-row"><span>Status</span><span style="color:#633806">Menunggu verifikasi petugas</span></div>
-      </div>
-      <div style="font-size:13px;color:var(--text-2);text-align:center;padding:10px 0">Dokumen hasil akan tersedia setelah permohonan disetujui.</div>`;
-  } else if (status === "tolak-dok") {
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
-        <div><div style="font-size:15px;font-weight:500">Permintaan Data</div><div style="font-size:12px;color:var(--text-2);margin-top:2px">No: PTSP/2026/002 &nbsp;|&nbsp; 28 Apr 2026</div></div>
-        <span class="badge ditolak">Ditolak</span>
-      </div>
-      <div class="tolak-notif">
-        <p>Alasan penolakan:</p>
-        <small>"KTP yang diupload tidak jelas/buram, mohon upload ulang dengan kualitas yang lebih baik."</small>
-      </div>
-      <div class="detail-info">
-        <div class="detail-row"><span>Nama</span><span>Siti Rahma</span></div>
-        <div class="detail-row"><span>Jenis</span><span>Permintaan Data</span></div>
-        <div class="detail-row"><span>Kategori penolakan</span><span style="color:#712B13">Dokumen bermasalah</span></div>
-      </div>
-      <div style="font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px">Ajukan ulang dengan memperbaiki dokumen yang bermasalah?</div>
-      <div class="btn-row">
-        <button class="btn-ulang" onclick="showPP('ulang')">Ya, ajukan ulang</button>
-        <button class="btn-secondary" onclick="keRiwayatP()">Tidak</button>
-      </div>`;
-  } else if (status === "tolak-non") {
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
-        <div><div style="font-size:15px;font-weight:500">Permintaan Kesediaan</div><div style="font-size:12px;color:var(--text-2);margin-top:2px">No: PTSP/2026/001 &nbsp;|&nbsp; 25 Apr 2026</div></div>
-        <span class="badge ditolak">Ditolak</span>
-      </div>
-      <div class="tolak-notif">
-        <p>Alasan penolakan:</p>
-        <small>"Pemohon tidak memenuhi kriteria penerima beasiswa yang ditetapkan pada periode ini."</small>
-      </div>
-      <div class="detail-info">
-        <div class="detail-row"><span>Nama</span><span>Siti Rahma</span></div>
-        <div class="detail-row"><span>Jenis</span><span>Permintaan Kesediaan</span></div>
-        <div class="detail-row"><span>Kategori penolakan</span><span style="color:#712B13">Persyaratan tidak terpenuhi</span></div>
-      </div>
-      <div style="font-size:12px;color:var(--coral);background:#fff3ee;border:0.5px solid var(--red-border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:14px">
-        Permohonan ini tidak dapat diajukan ulang. Anda dapat mengajukan permohonan baru jika sudah memenuhi persyaratan.
-      </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="showPP('dashboard');switchTabP('buat',document.querySelectorAll('#pemohon-wrap .nav-tab')[0])">Buat permohonan baru</button>
-        <button class="btn-secondary" onclick="keRiwayatP()">Kembali</button>
-      </div>`;
-  }
+// ─── DETAIL PEMOHON ──────────────────────────────────────
+async function bukaDetailP(status, rowId) {
   showPP("detail");
+  var el = document.getElementById("detail-card-p");
+  el.innerHTML =
+    '<p style="text-align:center;padding:20px;color:#888">Memuat...</p>';
+  var row = null;
+  if (rowId) {
+    var r = await db().from("permohonan").select("*").eq("id", rowId).single();
+    if (!r.error) row = r.data;
+  }
+  var judul = row
+    ? (row.jenis_layanan || "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, function (x) {
+          return x.toUpperCase();
+        })
+    : "Permohonan";
+  var no = row ? "PTSP/2026/" + String(row.id).padStart(3, "0") : "—";
+  var tgl = row
+    ? new Date(row.created_at).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "—";
+  var head =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border)"><div><div style="font-size:15px;font-weight:500">' +
+    judul +
+    '</div><div style="font-size:12px;color:var(--text-2);margin-top:2px">No: ' +
+    no +
+    " | " +
+    tgl +
+    "</div></div>";
+
+  if (status === "selesai") {
+    el.innerHTML =
+      head +
+      '<span class="badge selesai">Selesai</span></div><div style="font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px">Dokumen hasil</div><div class="dok-unduh"><span>Surat hasil.pdf</span><button class="btn-unduh">Unduh</button></div>';
+  } else if (status === "menunggu" || status === "diproses") {
+    el.innerHTML =
+      head +
+      '<span class="badge ' +
+      status +
+      '">' +
+      (status === "menunggu" ? "Menunggu verifikasi" : "Sedang diproses") +
+      '</span></div><div style="font-size:13px;color:var(--text-2);text-align:center;padding:10px 0">Dokumen hasil akan tersedia setelah disetujui.</div>';
+  } else if (status === "ditolak") {
+    var ket = "Silakan hubungi petugas.";
+    if (row && (row.alasan_tolak || row.kategori_tolak)) {
+      var bagian = [];
+      if (row.kategori_tolak)
+        bagian.push("<b>Kategori:</b> " + row.kategori_tolak);
+      if (row.dokumen_tolak)
+        bagian.push("<b>Dokumen bermasalah:</b> " + row.dokumen_tolak);
+      if (row.alasan_tolak) bagian.push("<b>Alasan:</b> " + row.alasan_tolak);
+      ket = bagian.join("<br>");
+    }
+    var isDocError =
+      row &&
+      row.kategori_tolak &&
+      row.kategori_tolak.toLowerCase().indexOf("dokumen") !== -1;
+    var btnAksi = isDocError
+      ? '<button class="btn-ulang" onclick="showPP(\'ulang\')" >Upload ulang dokumen</button>'
+      : '<button class="btn-ulang" onclick="buatPermohonanBaru()">Buat permohonan baru</button>';
+    el.innerHTML =
+      head +
+      '<span class="badge ditolak">Ditolak</span></div><div class="tolak-notif"><p>Alasan penolakan:</p><small>' +
+      ket +
+      '</small></div><div class="btn-row">' +
+      btnAksi +
+      '<button class="btn-secondary" onclick="keRiwayatP()">Kembali</button></div>';
+  }
 }
 
-/* ══ PETUGAS ══ */
-const akunPetugas = {
+function keRiwayatP() {
+  showPP("dashboard");
+  switchTabP("riwayat", document.getElementById("tab-riwayat"));
+}
+
+// ─── LOGIN PETUGAS ───────────────────────────────────────
+var akunPetugas = {
   "ahmad.fauzi": { pass: "ptsp1234", nama: "Ahmad Fauzi, S.Ag" },
 };
+var ptCurrentId = null;
+
 function doLoginPetugas() {
-  const user = document.getElementById("pt-input-user").value.trim();
-  const pass = document.getElementById("pt-input-pass").value;
-  const err = document.getElementById("pt-login-err");
-  const btn = event.target; // Ambil tombol yang diklik
-
-  btn.innerText = "Mengecek...";
+  var user = document.getElementById("pt-input-user").value.trim();
+  var pass = document.getElementById("pt-input-pass").value;
+  var err = document.getElementById("pt-login-err");
+  var btn = document.getElementById("btn-login-petugas");
   btn.disabled = true;
-
-  setTimeout(() => {
+  btn.innerText = "Mengecek...";
+  setTimeout(function () {
     if (akunPetugas[user] && akunPetugas[user].pass === pass) {
       err.classList.remove("show");
       document.getElementById("pt-nav-nama").textContent =
         akunPetugas[user].nama;
       document.getElementById("pt-login-page").style.display = "none";
       document.getElementById("pt-dashboard-page").style.display = "block";
+      loadTabelPetugas();
     } else {
       err.classList.add("show");
-      btn.innerText = "Login sebagai Petugas";
       btn.disabled = false;
+      btn.innerText = "Masuk";
     }
-  }, 1000); // Delay 1 detik biar keren
-}
-
-async function doRegister() {
-  // Ambil semua elemen input di dalam modal register
-  const inputs = document.querySelectorAll("#pp-register input");
-
-  const nama = inputs[0].value; // Input Nama
-  const nik = inputs[1].value; // Input NIK
-  const email = inputs[2].value; // Input Email
-  const password = inputs[3].value; // Input Password
-  const confirm = inputs[4].value; // Input Konfirmasi
-
-  // Validasi sederhana
-  if (!nama || !email || !password) {
-    alert("Nama, Email, dan Password wajib diisi ya min!");
-    return;
-  }
-
-  if (password !== confirm) {
-    alert("Password dan Konfirmasi Password nggak sama nih!");
-    return;
-  }
-
-  // Eksekusi ke Supabase
-  const { data, error } = await supabaseClient.auth.signUp({
-    email: email,
-    password: password,
-    options: {
-      data: {
-        full_name: nama,
-        nik: nik,
-      },
-    },
-  });
-
-  if (error) {
-    alert("Gagal daftar: " + error.message);
-  } else {
-    alert("Alhamdulillah, Berhasil Daftar! Silakan masuk.");
-    showPP("login");
-  }
+  }, 600);
 }
 
 function doLogoutPetugas() {
@@ -469,54 +417,188 @@ function doLogoutPetugas() {
   document.getElementById("pt-dashboard-page").style.display = "none";
   document.getElementById("pt-login-page").style.display = "block";
   kembaliPT();
-  // Kembali ke landing pemohon
   document.getElementById("petugas-wrap").style.display = "none";
   document.getElementById("pemohon-wrap").style.display = "block";
   showPP("landing");
 }
+
+// ─── TABEL PETUGAS DARI SUPABASE ─────────────────────────
+async function loadTabelPetugas() {
+  var tbody = document.getElementById("pt-tabel-body");
+  tbody.innerHTML =
+    '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Memuat data...</td></tr>';
+  try {
+    var r = await db()
+      .from("permohonan")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (r.error) throw r.error;
+    var data = r.data || [];
+    var sm = {
+      pending: "menunggu",
+      menunggu: "menunggu",
+      diproses: "diproses",
+      selesai: "selesai",
+      ditolak: "ditolak",
+    };
+    var sl = {
+      menunggu: "Menunggu verifikasi",
+      diproses: "Sedang diproses",
+      selesai: "Selesai",
+      ditolak: "Ditolak",
+    };
+    document.getElementById("stat-total").textContent = data.length;
+    document.getElementById("stat-menunggu").textContent = data.filter(
+      function (x) {
+        return sm[(x.status || "").toLowerCase()] === "menunggu";
+      },
+    ).length;
+    document.getElementById("stat-selesai").textContent = data.filter(
+      function (x) {
+        return (x.status || "").toLowerCase() === "selesai";
+      },
+    ).length;
+    document.getElementById("stat-ditolak").textContent = data.filter(
+      function (x) {
+        return (x.status || "").toLowerCase() === "ditolak";
+      },
+    ).length;
+    if (!data.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Belum ada permohonan.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data
+      .map(function (row, i) {
+        var s = sm[(row.status || "pending").toLowerCase()] || "menunggu";
+        var tgl = new Date(row.created_at).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+        var judul = (row.jenis_layanan || "")
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, function (x) {
+            return x.toUpperCase();
+          });
+        return (
+          '<tr data-status="' +
+          s +
+          '"><td>' +
+          String(i + 1).padStart(3, "0") +
+          "</td><td>" +
+          (row.nama_pemohon || "—") +
+          "</td><td>" +
+          judul +
+          "</td><td>" +
+          tgl +
+          '</td><td><span class="badge ' +
+          s +
+          '">' +
+          sl[s] +
+          '</span></td><td><button class="btn-buka" onclick="bukaDetailPTById(' +
+          row.id +
+          ')">Buka</button></td></tr>'
+        );
+      })
+      .join("");
+  } catch (e) {
+    tbody.innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c0392b">Gagal memuat: ' +
+      e.message +
+      "</td></tr>";
+  }
+}
+
 function filterTable(status, btn) {
-  document
-    .querySelectorAll(".filter button")
-    .forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".filter button").forEach(function (b) {
+    b.classList.remove("active");
+  });
   btn.classList.add("active");
-  document.querySelectorAll("#pt-tabel-body tr").forEach((tr) => {
+  document.querySelectorAll("#pt-tabel-body tr").forEach(function (tr) {
     tr.style.display =
       status === "semua" || tr.dataset.status === status ? "" : "none";
   });
 }
-function bukaDetailPT(nama, jenis, status, isRevisi) {
+
+// ─── DETAIL PETUGAS DARI SUPABASE ────────────────────────
+async function bukaDetailPTById(id) {
+  ptCurrentId = id;
   document.getElementById("pt-table-card").style.display = "none";
-  const d = document.getElementById("pt-detail-card");
-  d.classList.add("show");
-  document.getElementById("pt-detail-nama").textContent =
-    nama + (isRevisi ? " — Revisi" : "");
-  document.getElementById("pt-detail-jenis").textContent = jenis;
-  const badge = document.getElementById("pt-detail-badge");
-  const map = {
-    menunggu: ["menunggu", "Menunggu verifikasi"],
-    diproses: ["diproses", "Sedang diproses"],
-    selesai: ["selesai", "Selesai"],
-    ditolak: ["ditolak", "Ditolak"],
-  };
-  badge.className = "badge " + map[status][0];
-  badge.textContent = map[status][1];
-  document.getElementById("pt-action-area").style.display =
-    status === "menunggu" || status === "diproses" ? "block" : "none";
-  const rb = document.getElementById("pt-riwayat-box");
-  if (isRevisi) {
-    rb.style.display = "block";
-    document.getElementById("pt-riwayat-isi").innerHTML =
-      "<b>Tanggal penolakan:</b> 30 Apr 2026<br><b>Dokumen bermasalah:</b> KTP pemohon.pdf<br><b>Alasan:</b> KTP yang diupload tidak jelas/buram, mohon upload ulang.";
-  } else {
-    rb.style.display = "none";
-  }
+  document.getElementById("pt-detail-card").classList.add("show");
+  document.getElementById("pt-detail-nama").textContent = "Memuat...";
+  document.getElementById("pt-detail-jenis").textContent = "";
+  document.getElementById("pt-action-area").style.display = "none";
+  document.getElementById("pt-riwayat-box").style.display = "none";
   document.getElementById("pt-acc-form").classList.remove("show");
   resetTolakForm();
+  try {
+    var r = await db().from("permohonan").select("*").eq("id", id).single();
+    if (r.error) throw r.error;
+    var row = r.data;
+    var s = (row.status || "pending").toLowerCase();
+    var sm = {
+      pending: "menunggu",
+      menunggu: "menunggu",
+      diproses: "diproses",
+      selesai: "selesai",
+      ditolak: "ditolak",
+    };
+    var sl = {
+      menunggu: "Menunggu verifikasi",
+      diproses: "Sedang diproses",
+      selesai: "Selesai",
+      ditolak: "Ditolak",
+    };
+    var sc = sm[s] || "menunggu";
+    var judul = (row.jenis_layanan || "")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, function (x) {
+        return x.toUpperCase();
+      });
+    var tgl = new Date(row.created_at).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+    document.getElementById("pt-detail-nama").textContent =
+      row.nama_pemohon || "—";
+    document.getElementById("pt-detail-jenis").textContent = judul;
+    var badge = document.getElementById("pt-detail-badge");
+    badge.className = "badge " + sc;
+    badge.textContent = sl[sc];
+    document.getElementById("pt-info-nik").textContent = row.nik || "—";
+    document.getElementById("pt-info-email").textContent = row.email || "—";
+    document.getElementById("pt-info-tgl").textContent = tgl;
+    document.getElementById("pt-info-no").textContent =
+      "PTSP/2026/" + String(row.id).padStart(3, "0");
+    document.getElementById("pt-action-area").style.display =
+      sc === "menunggu" || sc === "diproses" ? "block" : "none";
+    if (sc === "ditolak" && (row.alasan_tolak || row.kategori_tolak)) {
+      var rb = document.getElementById("pt-riwayat-box");
+      rb.style.display = "block";
+      var isi = [];
+      if (row.kategori_tolak)
+        isi.push("<b>Kategori:</b> " + row.kategori_tolak);
+      if (row.dokumen_tolak) isi.push("<b>Dokumen:</b> " + row.dokumen_tolak);
+      if (row.alasan_tolak) isi.push("<b>Alasan:</b> " + row.alasan_tolak);
+      document.getElementById("pt-riwayat-isi").innerHTML = isi.join("<br>");
+    }
+  } catch (e) {
+    document.getElementById("pt-detail-nama").textContent =
+      "Gagal: " + e.message;
+  }
 }
+
+// Fallback fungsi lama (tidak dipakai, jaga kompatibilitas)
+function bukaDetailPT() {}
+
 function kembaliPT() {
   document.getElementById("pt-table-card").style.display = "block";
   document.getElementById("pt-detail-card").classList.remove("show");
+  ptCurrentId = null;
 }
+
 function toggleAcc() {
   document.getElementById("pt-acc-form").classList.toggle("show");
   document.getElementById("pt-tolak-form").classList.remove("show");
@@ -528,19 +610,25 @@ function toggleTolak() {
 }
 function resetTolakForm() {
   document.getElementById("pt-tolak-form").classList.remove("show");
-  document.getElementById("pt-type-dokumen").classList.remove("active");
-  document.getElementById("pt-type-nondokumen").classList.remove("active");
-  document.getElementById("pt-panel-dokumen").classList.remove("show");
-  document.getElementById("pt-panel-nondokumen").classList.remove("show");
+  ["pt-type-dokumen", "pt-type-nondokumen"].forEach(function (id) {
+    document.getElementById(id).classList.remove("active");
+  });
+  ["pt-panel-dokumen", "pt-panel-nondokumen"].forEach(function (id) {
+    document.getElementById(id).classList.remove("show");
+  });
   document
     .querySelectorAll("#pt-cek-list input[type=checkbox]")
-    .forEach((cb) => (cb.checked = false));
+    .forEach(function (cb) {
+      cb.checked = false;
+    });
   document.getElementById("pt-alasan-dok").value = "";
   document.getElementById("pt-kategori-nondok").value = "";
   document.getElementById("pt-alasan-nondok").value = "";
-  document.getElementById("pt-hint-dok-cek").classList.remove("show");
-  document.getElementById("pt-hint-dok-alasan").classList.remove("show");
-  document.getElementById("pt-hint-nondok").classList.remove("show");
+  ["pt-hint-dok-cek", "pt-hint-dok-alasan", "pt-hint-nondok"].forEach(
+    function (id) {
+      document.getElementById(id).classList.remove("show");
+    },
+  );
   document.getElementById("pt-btn-kirim-dok").disabled = true;
   document.getElementById("pt-btn-kirim-nondok").disabled = true;
 }
@@ -559,10 +647,12 @@ function pilihTolakType(type) {
     .classList.toggle("show", type === "nondokumen");
 }
 function cekValidasiDok() {
-  const adaCek = [
-    ...document.querySelectorAll("#pt-cek-list input[type=checkbox]"),
-  ].some((cb) => cb.checked);
-  const adaAlasan =
+  var adaCek = Array.from(
+    document.querySelectorAll("#pt-cek-list input[type=checkbox]"),
+  ).some(function (cb) {
+    return cb.checked;
+  });
+  var adaAlasan =
     document.getElementById("pt-alasan-dok").value.trim().length > 0;
   document.getElementById("pt-hint-dok-cek").classList.toggle("show", !adaCek);
   document
@@ -571,22 +661,136 @@ function cekValidasiDok() {
   document.getElementById("pt-btn-kirim-dok").disabled = !(adaCek && adaAlasan);
 }
 function cekValidasiNonDok() {
-  const kat = document.getElementById("pt-kategori-nondok").value.trim();
-  const val = document.getElementById("pt-alasan-nondok").value.trim();
-  const ok = kat.length > 0 && val.length > 0;
+  var kat = document.getElementById("pt-kategori-nondok").value.trim();
+  var val = document.getElementById("pt-alasan-nondok").value.trim();
+  var ok = kat.length > 0 && val.length > 0;
   document.getElementById("pt-btn-kirim-nondok").disabled = !ok;
   document.getElementById("pt-hint-nondok").classList.toggle("show", !ok);
 }
-function kirimTolak(type) {
-  alert(
-    "Penolakan berhasil dikirim (" +
-      (type === "dokumen" ? "dokumen bermasalah" : "non-dokumen") +
-      ").",
-  );
-  kembaliPT();
+
+// ─── SETUJUI ─────────────────────────────────────────────
+async function kirimSetujui() {
+  if (!ptCurrentId) return;
+  var btn = document.querySelector(".btn-kirim-acc");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  try {
+    var r = await db()
+      .from("permohonan")
+      .update({ status: "selesai" })
+      .eq("id", ptCurrentId);
+    if (r.error) throw r.error;
+    alert("Permohonan berhasil disetujui.");
+    kembaliPT();
+    loadTabelPetugas();
+  } catch (e) {
+    alert("Gagal: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Kirim persetujuan";
+  }
 }
 
-// Tutup modal klik luar
-document.getElementById("modal-peran").addEventListener("click", function (e) {
-  if (e.target === this) tutupModal();
-});
+// ─── TOLAK ───────────────────────────────────────────────
+async function kirimTolak(type) {
+  if (!ptCurrentId) return;
+  var alasan = "",
+    dokumen = "",
+    kategori = "";
+  if (type === "dokumen") {
+    dokumen = Array.from(
+      document.querySelectorAll("#pt-cek-list input[type=checkbox]"),
+    )
+      .filter(function (cb) {
+        return cb.checked;
+      })
+      .map(function (cb) {
+        return cb.parentElement.textContent.trim();
+      })
+      .join(", ");
+    alasan = document.getElementById("pt-alasan-dok").value.trim();
+    kategori = "Dokumen bermasalah";
+  } else {
+    kategori = document.getElementById("pt-kategori-nondok").value.trim();
+    alasan = document.getElementById("pt-alasan-nondok").value.trim();
+  }
+  var btn =
+    type === "dokumen"
+      ? document.getElementById("pt-btn-kirim-dok")
+      : document.getElementById("pt-btn-kirim-nondok");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  try {
+    var r = await db()
+      .from("permohonan")
+      .update({
+        status: "ditolak",
+        alasan_tolak: alasan,
+        dokumen_tolak: dokumen || null,
+        kategori_tolak: kategori,
+      })
+      .eq("id", ptCurrentId);
+    if (r.error) throw r.error;
+    alert("Permohonan ditolak dan alasan tersimpan.");
+    kembaliPT();
+    loadTabelPetugas();
+  } catch (e) {
+    alert("Gagal: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Kirim penolakan";
+  }
+}
+
+// ─── BUAT PERMOHONAN BARU (dari halaman ditolak non-dokumen) ────
+function buatPermohonanBaru() {
+  showPP("dashboard");
+  switchTabP("buat", document.getElementById("tab-buat"));
+}
+
+// ─── KIRIM ULANG (halaman ajukan ulang, pakai captcha2) ──────────
+async function kirimUlang() {
+  var cek = document.getElementById("captcha2");
+  var sel = document.getElementById("pilih-layanan");
+  if (!cek || !cek.checked) {
+    alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
+    return;
+  }
+  var btn = document.getElementById("btn-kirim-ulang");
+  btn.disabled = true;
+  btn.innerText = "Sedang Mengirim...";
+  try {
+    var ur = await db().auth.getUser();
+    var user = ur.data.user;
+    if (!user) {
+      alert("Sesi berakhir, silakan login kembali.");
+      showPP("login");
+      return;
+    }
+    var jenis = sel ? sel.value : "";
+    var ins = await db()
+      .from("permohonan")
+      .insert([
+        {
+          user_id: user.id,
+          nama_pemohon: user.user_metadata.full_name,
+          nik: user.user_metadata.nik,
+          email: user.email,
+          jenis_layanan: jenis || "upload_ulang",
+          alasan: "-",
+          status: "Pending",
+        },
+      ]);
+    if (ins.error) {
+      alert("Gagal mengirim: " + ins.error.message);
+      return;
+    }
+    cek.checked = false;
+    showPP("sukses");
+  } catch (e) {
+    alert("Kesalahan: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Kirim ulang permohonan";
+  }
+}
