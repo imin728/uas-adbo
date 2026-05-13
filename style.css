@@ -981,3 +981,175 @@ tr:hover td {
   font-weight: 500;
   cursor: pointer;
 }
+
+/* ─── TOAST NOTIFICATION ─── */
+#toast-wrap {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 260px;
+  max-width: 340px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  pointer-events: all;
+  animation: slideIn 0.25s ease;
+  cursor: pointer;
+}
+.toast.sukses {
+  background: #e1f5ee;
+  color: #085041;
+  border: 0.5px solid #1d9e75;
+}
+.toast.gagal {
+  background: #faece7;
+  color: #712b13;
+  border: 0.5px solid #d85a30;
+}
+.toast.info {
+  background: #e6f1fb;
+  color: #0c447c;
+  border: 0.5px solid #185fa5;
+}
+.toast-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.toast-msg {
+  flex: 1;
+  line-height: 1.4;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+
+/* ─── LOGIN ERROR INLINE ─── */
+.login-err {
+  font-size: 12px;
+  color: #712b13;
+  background: #faece7;
+  border: 0.5px solid #f0997b;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+.login-err.show {
+  display: flex;
+}
+
+/* ─── BACKGROUND UTAMA ─── */
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #0c447c 0%,
+    #185fa5 40%,
+    #1d7fc4 70%,
+    #1d9e75 100%
+  );
+  padding: 40px 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Dekorasi lingkaran blur di background */
+body::before {
+  content: "";
+  position: fixed;
+  top: -80px;
+  left: -80px;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -100px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  background: rgba(29, 158, 117, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dekorasi tambahan tengah */
+.bg-deco {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pastikan konten di atas background */
+.main-wrap,
+.petugas-wrap,
+.modal-overlay {
+  position: relative;
+  z-index: 1;
+}
+
+/* Shadow pada card utama */
+.main-wrap {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.petugas-wrap {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+/* ─── FOOTER WATERMARK ─── */
+.ptsp-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.5px;
+}
+.ptsp-footer span {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}

@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="toast-wrap"></div>
+    <!-- Dekorasi background -->
+    <div class="bg-deco"></div>
+
     <!-- MODAL PILIH PERAN -->
     <div class="modal-overlay" id="modal-peran">
       <div class="modal-box">
@@ -253,30 +257,14 @@
           <div class="card">
             <div class="card-title">Ajukan Ulang</div>
             <div class="info-box">
-              ℹ️ Hanya dokumen yang perlu diperbaiki yang perlu diupload ulang.
+              ℹ️ Upload ulang dokumen yang bermasalah sesuai catatan penolakan.
             </div>
-            <div class="dok-item-ok">
-              <span>Surat permohonan (PDF)</span
-              ><span class="ok-badge">✓ Sudah diterima</span>
-            </div>
-            <div class="dok-item-ok">
-              <span>Kartu keluarga (PDF)</span
-              ><span class="ok-badge">✓ Sudah diterima</span>
-            </div>
-            <div
-              style="
-                margin-top: 10px;
-                margin-bottom: 6px;
-                font-size: 12px;
-                color: #712b13;
-                font-weight: 500;
-              "
-            >
-              Perlu diupload ulang:
-            </div>
-            <div class="dok-item-err">
-              <span>KTP pemohon (PDF) — buram/tidak jelas</span
-              ><small>Pilih file baru</small>
+            <div id="ulang-notif-tolak" style="margin-bottom: 14px"></div>
+            <div class="dok-syarat">
+              <div class="dok-syarat-title">
+                Upload dokumen yang perlu diperbaiki
+              </div>
+              <div id="ulang-dok-list"></div>
             </div>
             <div style="margin-top: 16px">
               <div class="captcha-box">
@@ -295,7 +283,6 @@
             </div>
           </div>
         </div>
-
         <!-- SUKSES -->
         <div class="page" id="pp-sukses">
           <div class="card">
@@ -534,18 +521,7 @@
             </div>
             <div class="dok-list">
               <div class="dok-title">Dokumen yang diupload</div>
-              <div class="dok-item">
-                <span class="dok-name">Surat permohonan.pdf</span
-                ><span class="dok-link">Lihat dokumen</span>
-              </div>
-              <div class="dok-item">
-                <span class="dok-name">KTP pemohon.pdf</span
-                ><span class="dok-link">Lihat dokumen</span>
-              </div>
-              <div class="dok-item">
-                <span class="dok-name">Buku nikah.pdf</span
-                ><span class="dok-link">Lihat dokumen</span>
-              </div>
+              <div id="pt-dok-list-isi">—</div>
             </div>
             <div class="riwayat-box" id="pt-riwayat-box" style="display: none">
               <div class="riwayat-box-label">Riwayat penolakan sebelumnya</div>
@@ -567,8 +543,13 @@
                   <span style="color: var(--red)">*</span></label
                 >
                 <div class="upload-area">
-                  <p>Seret file ke sini atau</p>
-                  <span>klik untuk memilih file</span>
+                  <p>Pilih file dokumen hasil</p>
+                  <input
+                    type="file"
+                    id="input-hasil-dok"
+                    accept=".pdf"
+                    style="margin-top: 8px; font-size: 12px; width: 100%"
+                  />
                 </div>
                 <button class="btn-kirim-acc" onclick="kirimSetujui()">
                   Kirim persetujuan
@@ -685,6 +666,11 @@
     <!-- end petugas-wrap -->
 
     <div class="petugas-wrap" id="petugas-wrap" style="display: none"></div>
+
+    <div class="ptsp-footer">
+      © 2026 <span>PTSP Kemenag Gorontalo</span> — Pelayanan Terpadu Satu Pintu
+      Kementerian Agama Provinsi Gorontalo
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>

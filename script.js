@@ -1,3 +1,30 @@
+// ─── TOAST & NOTIFIKASI ───────────────────────────────────
+function toast(pesan, tipe) {
+  var wrap = document.getElementById("toast-wrap");
+  var icon = tipe === "sukses" ? "✓" : tipe === "gagal" ? "✕" : "ℹ";
+  var el = document.createElement("div");
+  el.className = "toast " + (tipe || "info");
+  el.innerHTML =
+    '<span class="toast-icon">' +
+    icon +
+    '</span><span class="toast-msg">' +
+    pesan +
+    "</span>";
+  el.onclick = function () {
+    hapusToast(el);
+  };
+  wrap.appendChild(el);
+  setTimeout(function () {
+    hapusToast(el);
+  }, 3000);
+}
+function hapusToast(el) {
+  el.style.animation = "fadeOut 0.25s ease forwards";
+  setTimeout(function () {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }, 250);
+}
+
 // ─── SUPABASE ───────────────────────────────────────────
 var SURL = "https://sjykqwkdsubugqxyavyr.supabase.co";
 var SKEY =
@@ -59,7 +86,7 @@ async function doLoginPemohon() {
   var email = document.getElementById("login-email").value.trim();
   var pass = document.getElementById("login-pass").value;
   if (!email || !pass) {
-    alert("Email dan password harus diisi!");
+    toast("Email dan password harus diisi!", "gagal");
     return;
   }
   var btn = document.querySelector("#pp-login .btn-primary");
@@ -69,7 +96,7 @@ async function doLoginPemohon() {
   btn.disabled = false;
   btn.innerText = "Masuk";
   if (r.error) {
-    alert("Login gagal: " + r.error.message);
+    toast("Login gagal, periksa email dan password!", "gagal");
     return;
   }
   var nama = r.data.user.user_metadata.full_name || "Pemohon";
@@ -97,11 +124,11 @@ async function doRegister() {
   var pass = document.getElementById("reg-pass").value;
   var confirm = document.getElementById("reg-confirm").value;
   if (!nama || !email || !pass) {
-    alert("Nama, Email, dan Password wajib diisi!");
+    toast("nama, Email dan password harus diisi!", "gagal");
     return;
   }
   if (pass !== confirm) {
-    alert("Password tidak sama!");
+    toast("Password tidak sama!");
     return;
   }
   var btn = document.querySelector("#pp-register .btn-primary");
@@ -115,10 +142,10 @@ async function doRegister() {
   btn.disabled = false;
   btn.innerText = "Daftar sekarang";
   if (r.error) {
-    alert("Gagal daftar: " + r.error.message);
+    toast("Gagal mendaftar: " + r.error.message, "gagal");
     return;
   }
-  alert("Berhasil daftar! Silakan masuk.");
+  toast("Berhasil daftar! Silakan masuk.", "sukses");
   showPP("login");
 }
 
@@ -163,7 +190,7 @@ function pilihJenis(val) {
       return (
         '<div class="dok-item-form"><span>' +
         d +
-        "</span><small>Pilih file</small></div>"
+        '</span><input type="file" accept=".pdf" style="font-size:11px;color:var(--blue);cursor:pointer;border:none;background:none"/></div>'
       );
     })
     .join("");
@@ -173,12 +200,12 @@ async function kirimPermohonan() {
   var cek = document.getElementById("captcha");
   var sel = document.getElementById("pilih-layanan");
   if (!cek || !cek.checked) {
-    alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
+    toast("Silakan centang 'Saya bukan robot' terlebih dahulu!", "info");
     return;
   }
   var jenis = sel ? sel.value : "";
   if (!jenis) {
-    alert("Harap pilih jenis layanan terlebih dahulu!");
+    toast("Harap pilih jenis layanan terlebih dahulu!", "info");
     return;
   }
   var btn = document.getElementById("btn-kirim-permohonan");
@@ -188,9 +215,25 @@ async function kirimPermohonan() {
     var ur = await db().auth.getUser();
     var user = ur.data.user;
     if (!user) {
-      alert("Sesi berakhir, silakan login kembali.");
+      toast("Sesi berakhir, silakan login kembali.", "gagal");
       showPP("login");
       return;
+    }
+    var fileInputs = document.querySelectorAll("#dok-list input[type=file]");
+    var urlDokumen = [];
+    for (var i = 0; i < fileInputs.length; i++) {
+      var file = fileInputs[i].files[0];
+      if (file) {
+        var path = "pemohon/" + user.id + "/" + Date.now() + "_" + file.name;
+        var up = await db().storage.from("dokumen-ptsp").upload(path, file);
+        if (up.error) {
+          toast("Gagal upload file: " + file.name, "gagal");
+          return;
+        }
+        var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
+          .data.publicUrl;
+        urlDokumen.push({ nama: file.name, url: url });
+      }
     }
     var ins = await db()
       .from("permohonan")
@@ -203,6 +246,7 @@ async function kirimPermohonan() {
           jenis_layanan: jenis,
           alasan: "-",
           status: "Pending",
+          dokumen_upload: JSON.stringify(urlDokumen),
         },
       ]);
     if (ins.error) {
@@ -274,6 +318,9 @@ async function loadRiwayat() {
           .replace(/\b\w/g, function (x) {
             return x.toUpperCase();
           });
+        var tagRevisi = row.is_revisi
+          ? '<span class="tag-revisi">Revisi</span>'
+          : "";
         return (
           '<div class="riwayat-item" onclick="bukaDetailP(\'' +
           sc +
@@ -282,6 +329,7 @@ async function loadRiwayat() {
           "')\">" +
           '<div class="riwayat-head"><span class="riwayat-title">' +
           judul +
+          (row.is_revisi ? '<span class="tag-revisi">Revisi</span>' : "") +
           "</span>" +
           '<span class="badge ' +
           sc +
@@ -338,9 +386,16 @@ async function bukaDetailP(status, rowId) {
     "</div></div>";
 
   if (status === "selesai") {
+    var urlHasil = row && row.url_hasil ? row.url_hasil : null;
+    var tombolUnduh = urlHasil
+      ? '<div class="dok-unduh"><span>Dokumen hasil.pdf</span><button class="btn-unduh" onclick="window.open(\'' +
+        urlHasil +
+        "','_blank')\">Unduh</button></div>"
+      : '<div style="font-size:13px;color:var(--text-2);padding:10px 0">Dokumen hasil belum tersedia.</div>';
     el.innerHTML =
       head +
-      '<span class="badge selesai">Selesai</span></div><div style="font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px">Dokumen hasil</div><div class="dok-unduh"><span>Surat hasil.pdf</span><button class="btn-unduh">Unduh</button></div>';
+      '<span class="badge selesai">Selesai</span></div><div style="font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px">Dokumen hasil</div>' +
+      tombolUnduh;
   } else if (status === "menunggu" || status === "diproses") {
     el.innerHTML =
       head +
@@ -365,7 +420,9 @@ async function bukaDetailP(status, rowId) {
       row.kategori_tolak &&
       row.kategori_tolak.toLowerCase().indexOf("dokumen") !== -1;
     var btnAksi = isDocError
-      ? '<button class="btn-ulang" onclick="showPP(\'ulang\')" >Ajukan Ulang</button>'
+      ? '<button class="btn-ulang" onclick="bukaHalamanUlang(\'' +
+        rowId +
+        "')\">Ajukan Ulang</button>"
       : '<button class="btn-ulang" onclick="buatPermohonanBaru()">Buat permohonan baru</button>';
     el.innerHTML =
       head +
@@ -382,11 +439,102 @@ function keRiwayatP() {
   switchTabP("riwayat", document.getElementById("tab-riwayat"));
 }
 
+async function bukaHalamanUlang(id) {
+  idPermohonanDitolak = id;
+  showPP("ulang");
+
+  // Reset dulu
+  document.getElementById("ulang-dok-list").innerHTML = "";
+  document.getElementById("ulang-notif-tolak").innerHTML = "";
+  document.getElementById("captcha2").checked = false;
+
+  // Ambil data permohonan yang ditolak
+  var r = await db().from("permohonan").select("*").eq("id", id).single();
+  if (r.error || !r.data) return;
+  var row = r.data;
+
+  // Tampilkan alasan penolakan
+  if (row.alasan_tolak || row.dokumen_tolak) {
+    var notif = [];
+    if (row.dokumen_tolak)
+      notif.push("<b>Dokumen bermasalah:</b> " + row.dokumen_tolak);
+    if (row.alasan_tolak) notif.push("<b>Alasan:</b> " + row.alasan_tolak);
+    document.getElementById("ulang-notif-tolak").innerHTML =
+      '<div class="tolak-notif"><p>Catatan penolakan:</p><small>' +
+      notif.join("<br>") +
+      "</small></div>";
+  }
+
+  // Tampilkan input file untuk semua dokumen sesuai jenis permohonan
+  var daftarDok = {
+    permintaan_data: [
+      "Surat permohonan (PDF)",
+      "KTP pemohon (PDF)",
+      "Surat keterangan instansi (PDF)",
+    ],
+    rohaniawan: [
+      "Surat permohonan (PDF)",
+      "KTP pemohon (PDF)",
+      "Surat undangan kegiatan (PDF)",
+    ],
+    permintaan_kesediaan: [
+      "Surat permohonan (PDF)",
+      "KTP pemohon (PDF)",
+      "Proposal kegiatan (PDF)",
+    ],
+    perubahan_sirup: [
+      "Surat permohonan (PDF)",
+      "KTP pemohon (PDF)",
+      "Dokumen SIRUP lama (PDF)",
+    ],
+    permohonan_rekomendasi: [
+      "Surat permohonan (PDF)",
+      "KTP pemohon (PDF)",
+      "Dokumen pendukung (PDF)",
+    ],
+  };
+  var dokList = daftarDok[row.jenis_layanan] || [];
+  var dokBermasalah = row.dokumen_tolak ? row.dokumen_tolak.split(", ") : [];
+
+  document.getElementById("ulang-dok-list").innerHTML = dokList
+    .map(function (d) {
+      // Cek apakah dokumen ini termasuk yang bermasalah
+      var bermasalah = dokBermasalah.some(function (db) {
+        return (
+          d
+            .toLowerCase()
+            .indexOf(db.toLowerCase().replace(".pdf", "").trim()) !== -1 ||
+          db
+            .toLowerCase()
+            .indexOf(d.toLowerCase().replace(" (pdf)", "").trim()) !== -1
+        );
+      });
+      if (bermasalah) {
+        return (
+          '<div class="dok-item-err" style="flex-direction:column;align-items:flex-start;gap:6px">' +
+          "<span>" +
+          d +
+          " — perlu diperbaiki</span>" +
+          '<input type="file" accept=".pdf" style="font-size:11px;width:100%"/>' +
+          "</div>"
+        );
+      } else {
+        return (
+          '<div class="dok-item-ok"><span>' +
+          d +
+          '</span><span class="ok-badge">✓ Sudah diterima</span></div>'
+        );
+      }
+    })
+    .join("");
+}
+
 // ─── LOGIN PETUGAS ───────────────────────────────────────
 var akunPetugas = {
   "ahmad.fauzi": { pass: "ptsp1234", nama: "Ahmad Fauzi, S.Ag" },
 };
 var ptCurrentId = null;
+var idPermohonanDitolak = null;
 
 function doLoginPetugas() {
   var user = document.getElementById("pt-input-user").value.trim();
@@ -481,6 +629,9 @@ async function loadTabelPetugas() {
           .replace(/\b\w/g, function (x) {
             return x.toUpperCase();
           });
+        var tagRevisi = row.is_revisi
+          ? '<span class="tag-revisi">Revisi</span>'
+          : "";
         return (
           '<tr data-status="' +
           s +
@@ -490,6 +641,7 @@ async function loadTabelPetugas() {
           (row.nama_pemohon || "—") +
           "</td><td>" +
           judul +
+          tagRevisi +
           "</td><td>" +
           tgl +
           '</td><td><span class="badge ' +
@@ -572,8 +724,48 @@ async function bukaDetailPTById(id) {
     document.getElementById("pt-info-tgl").textContent = tgl;
     document.getElementById("pt-info-no").textContent =
       "PTSP/2026/" + String(row.id).padStart(3, "0");
+    var dokEl = document.getElementById("pt-dok-list-isi");
+    if (row.dokumen_upload) {
+      try {
+        var dokArr = JSON.parse(row.dokumen_upload);
+        if (dokArr.length > 0) {
+          dokEl.innerHTML = dokArr
+            .map(function (d) {
+              return (
+                '<div class="dok-item"><span class="dok-name">' +
+                d.nama +
+                '</span><span class="dok-link" onclick="window.open(\'' +
+                d.url +
+                "','_blank')\">Lihat dokumen</span></div>"
+              );
+            })
+            .join("");
+        } else {
+          dokEl.innerHTML =
+            '<div style="font-size:13px;color:var(--text-2);padding:8px 0">Tidak ada dokumen diupload.</div>';
+        }
+      } catch (e) {
+        dokEl.innerHTML =
+          '<div style="font-size:13px;color:var(--text-2);padding:8px 0">Gagal memuat dokumen.</div>';
+      }
+    } else {
+      dokEl.innerHTML =
+        '<div style="font-size:13px;color:var(--text-2);padding:8px 0">Tidak ada dokumen diupload.</div>';
+    }
     document.getElementById("pt-action-area").style.display =
       sc === "menunggu" || sc === "diproses" ? "block" : "none";
+    if (sc === "selesai" && row.url_hasil) {
+      var dokEl2 = document.getElementById("pt-dok-list-isi");
+      if (dokEl2) {
+        dokEl2.innerHTML +=
+          '<div class="dok-item" style="margin-top:10px;border-color:#b6dfc8;background:#f0faf5">' +
+          '<span class="dok-name" style="color:#085041">📄 Dokumen hasil</span>' +
+          '<span class="dok-link" onclick="window.open(\'' +
+          row.url_hasil +
+          "','_blank')\">Lihat dokumen hasil</span>" +
+          "</div>";
+      }
+    }
     if (sc === "ditolak" && (row.alasan_tolak || row.kategori_tolak)) {
       var rb = document.getElementById("pt-riwayat-box");
       rb.style.display = "block";
@@ -697,20 +889,31 @@ function cekValidasiNonDok() {
 // ─── SETUJUI ─────────────────────────────────────────────
 async function kirimSetujui() {
   if (!ptCurrentId) return;
+  var fileInput = document.getElementById("input-hasil-dok");
+  if (!fileInput || !fileInput.files[0]) {
+    toast("Harap pilih file dokumen hasil terlebih dahulu!", "info");
+    return;
+  }
+  var file = fileInput.files[0];
   var btn = document.querySelector(".btn-kirim-acc");
   btn.disabled = true;
-  btn.textContent = "Menyimpan...";
+  btn.textContent = "Mengupload...";
   try {
+    var path = "hasil/" + ptCurrentId + "/" + Date.now() + "_" + file.name;
+    var up = await db().storage.from("dokumen-ptsp").upload(path, file);
+    if (up.error) throw up.error;
+    var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
+      .data.publicUrl;
     var r = await db()
       .from("permohonan")
-      .update({ status: "selesai" })
+      .update({ status: "selesai", url_hasil: url })
       .eq("id", ptCurrentId);
     if (r.error) throw r.error;
-    alert("Permohonan berhasil disetujui.");
+    alert("Permohonan berhasil disetujui dan dokumen hasil tersimpan.");
     kembaliPT();
     loadTabelPetugas();
   } catch (e) {
-    alert("Gagal: " + e.message);
+    toast("Gagal: " + e.message, "gagal");
   } finally {
     btn.disabled = false;
     btn.textContent = "Kirim persetujuan";
@@ -757,7 +960,7 @@ async function kirimTolak(type) {
       })
       .eq("id", ptCurrentId);
     if (r.error) throw r.error;
-    alert("Permohonan ditolak dan alasan tersimpan.");
+    toast("Permohonan berhasil ditolak.", "sukses");
     kembaliPT();
     loadTabelPetugas();
   } catch (e) {
@@ -777,9 +980,12 @@ function buatPermohonanBaru() {
 // ─── KIRIM ULANG (halaman ajukan ulang, pakai captcha2) ──────────
 async function kirimUlang() {
   var cek = document.getElementById("captcha2");
-  var sel = document.getElementById("pilih-layanan");
   if (!cek || !cek.checked) {
-    alert("Silakan centang 'Saya bukan robot' terlebih dahulu!");
+    toast("Silakan centang 'Saya bukan robot' terlebih dahulu!", "info");
+    return;
+  }
+  if (!idPermohonanDitolak) {
+    toast("Terjadi kesalahan, silakan kembali dan coba lagi.", "gagal");
     return;
   }
   var btn = document.getElementById("btn-kirim-ulang");
@@ -789,34 +995,81 @@ async function kirimUlang() {
     var ur = await db().auth.getUser();
     var user = ur.data.user;
     if (!user) {
-      alert("Sesi berakhir, silakan login kembali.");
+      toast("Sesi berakhir, silakan login kembali.", "gagal");
       showPP("login");
       return;
     }
-    var jenis = sel ? sel.value : "";
-    var ins = await db()
+    // Upload file baru jika ada
+    var fileInputs = document.querySelectorAll(
+      "#ulang-dok-list input[type=file]",
+    );
+    var urlDokumen = [];
+    for (var i = 0; i < fileInputs.length; i++) {
+      var file = fileInputs[i].files[0];
+      if (file) {
+        var path =
+          "pemohon/" + user.id + "/" + Date.now() + "_" + i + "_" + file.name;
+        var up = await db().storage.from("dokumen-ptsp").upload(path, file);
+        if (up.error) {
+          toast("Gagal upload file: " + file.name, "gagal");
+          return;
+        }
+        var url = db().storage.from("dokumen-ptsp").getPublicUrl(path)
+          .data.publicUrl;
+        urlDokumen.push({ nama: file.name, url: url });
+      }
+    }
+    // Update permohonan lama bukan buat baru
+    var updateData = {
+      status: "Pending",
+      alasan_tolak: null,
+      dokumen_tolak: null,
+      kategori_tolak: null,
+      is_revisi: true,
+    };
+    if (urlDokumen.length > 0) {
+      updateData.dokumen_upload = JSON.stringify(urlDokumen);
+    }
+    var r = await db()
       .from("permohonan")
-      .insert([
-        {
-          user_id: user.id,
-          nama_pemohon: user.user_metadata.full_name,
-          nik: user.user_metadata.nik,
-          email: user.email,
-          jenis_layanan: jenis || "upload_ulang",
-          alasan: "-",
-          status: "Pending",
-        },
-      ]);
-    if (ins.error) {
-      alert("Gagal mengirim: " + ins.error.message);
+      .update(updateData)
+      .eq("id", idPermohonanDitolak);
+    if (r.error) {
+      toast("Gagal mengirim: " + r.error.message, "gagal");
       return;
     }
     cek.checked = false;
+    idPermohonanDitolak = null;
     showPP("sukses");
+    toast("Permohonan berhasil diajukan ulang!", "sukses");
   } catch (e) {
-    alert("Kesalahan: " + e.message);
+    toast("Kesalahan: " + e.message, "gagal");
   } finally {
     btn.disabled = false;
     btn.innerText = "Kirim ulang permohonan";
   }
 }
+// ─── CEK SESI OTOMATIS SAAT HALAMAN DIBUKA ───────────────
+(async function () {
+  var { data } = await db().auth.getSession();
+  if (data && data.session && data.session.user) {
+    var user = data.session.user;
+    var nama = user.user_metadata.full_name || "Pemohon";
+    document.getElementById("pemohon-wrap").style.display = "block";
+    document.getElementById("petugas-wrap").style.display = "none";
+    var nu = document.getElementById("nav-user-p");
+    nu.textContent = nama;
+    nu.style.display = "inline";
+    var nb = document.getElementById("nav-action-p");
+    nb.textContent = "Logout";
+    nb.onclick = async function () {
+      await db().auth.signOut();
+      nu.style.display = "none";
+      nb.textContent = "Login";
+      nb.onclick = bukaModal;
+      showPP("landing");
+    };
+    showPP("dashboard");
+    switchTabP("buat", document.getElementById("tab-buat"));
+  }
+})();
