@@ -584,65 +584,30 @@ async function bukaDetailPTById(id) {
       if (row.alasan_tolak) isi.push("<b>Alasan:</b> " + row.alasan_tolak);
       document.getElementById("pt-riwayat-isi").innerHTML = isi.join("<br>");
     }
-    // ─── RIWAYAT PENOLAKAN untuk permohonan upload ulang ───────────
     if (
       (row.jenis_layanan || "").toLowerCase() === "upload_ulang" &&
       row.user_id
     ) {
-      try {
-        var riwayat = await db()
-          .from("permohonan")
-          .select("*")
-          .eq("user_id", row.user_id)
-          .eq("status", "ditolak")
-          .order("created_at", { ascending: false });
-        if (!riwayat.error && riwayat.data && riwayat.data.length > 0) {
-          var rb2 = document.getElementById("pt-riwayat-box");
-          rb2.style.display = "block";
-          var label = document.querySelector(".riwayat-box-label");
-          if (label)
-            label.textContent =
-              "Riwayat penolakan sebelumnya (" +
-              riwayat.data.length +
-              " catatan)";
-          var isiArr = riwayat.data.map(function (rw, idx) {
-            var tglRw = new Date(rw.created_at).toLocaleDateString("id-ID", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            });
-            var noRw = "PTSP/2026/" + String(rw.id).padStart(3, "0");
-            var judulRw = (rw.jenis_layanan || "")
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, function (x) {
-                return x.toUpperCase();
-              });
-            var baris = [];
-            baris.push(
-              "<span style='font-weight:600;color:#4a2700'>[" +
-                (idx + 1) +
-                "] " +
-                judulRw +
-                " — " +
-                tglRw +
-                " (No: " +
-                noRw +
-                ")</span>",
-            );
-            if (rw.kategori_tolak)
-              baris.push("<b>Kategori:</b> " + rw.kategori_tolak);
-            if (rw.dokumen_tolak)
-              baris.push("<b>Dokumen bermasalah:</b> " + rw.dokumen_tolak);
-            if (rw.alasan_tolak)
-              baris.push("<b>Alasan:</b> " + rw.alasan_tolak);
-            return baris.join("<br>");
-          });
-          document.getElementById("pt-riwayat-isi").innerHTML = isiArr.join(
-            "<br><hr style='border:none;border-top:0.5px solid #e8c98a;margin:8px 0'>",
-          );
-        }
-      } catch (eRw) {
-        /* abaikan jika gagal ambil riwayat */
+      var riwayat = await db()
+        .from("permohonan")
+        .select("*")
+        .eq("user_id", row.user_id)
+        .eq("status", "ditolak")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!riwayat.error && riwayat.data && riwayat.data.length > 0) {
+        var rw = riwayat.data[0];
+        var rb3 = document.getElementById("pt-riwayat-box");
+        rb3.style.display = "block";
+        var label = document.querySelector(".riwayat-box-label");
+        if (label) label.textContent = "Alasan penolakan sebelumnya";
+        var isi2 = [];
+        if (rw.kategori_tolak)
+          isi2.push("<b>Kategori:</b> " + rw.kategori_tolak);
+        if (rw.dokumen_tolak)
+          isi2.push("<b>Dokumen bermasalah:</b> " + rw.dokumen_tolak);
+        if (rw.alasan_tolak) isi2.push("<b>Alasan:</b> " + rw.alasan_tolak);
+        document.getElementById("pt-riwayat-isi").innerHTML = isi2.join("<br>");
       }
     }
   } catch (e) {
