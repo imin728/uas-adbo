@@ -1181,3 +1181,74 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   })();
 });
+
+// ─── CHATBOT AI (GEMINI) ──────────────────────────────────
+function toggleChat() {
+  const chat = document.getElementById("chat-container");
+  const isVisible = chat.style.display === "flex";
+  chat.style.display = isVisible ? "none" : "flex";
+}
+
+function checkEnterChat(e) {
+  if (e.key === "Enter") kirimPesanAI();
+}
+
+async function kirimPesanAI() {
+  const input = document.getElementById("chat-input");
+  const body = document.getElementById("chat-body");
+  const pesan = input.value.trim();
+
+  if (!pesan) return;
+
+  // Tampilkan pesan user
+  body.innerHTML += `<div class="user-msg">${pesan}</div>`;
+  input.value = "";
+  body.scrollTop = body.scrollHeight;
+
+  // Loading bot
+  const loadingId = "bot-load-" + Date.now();
+  body.innerHTML += `<div class="bot-msg" id="${loadingId}">...</div>`;
+  body.scrollTop = body.scrollHeight;
+  try {
+    const response = await db().functions.invoke("tanya-gemini", {
+      body: { prompt: pesan },
+    });
+
+    console.log("Respon Full dari Supabase:", response); // Cek di F12 Console
+
+    const data = response.data;
+    const error = response.error;
+
+    if (error) throw error;
+
+    let jawabanAI = "";
+
+    // Logika pengecekan data yang lebih kuat
+    if (data) {
+      if (typeof data === "string") {
+        // Jika data yang balik ternyata string, kita coba parsing
+        try {
+          const parsed = JSON.parse(data);
+          jawabanAI = parsed.answer || data;
+        } catch (e) {
+          jawabanAI = data;
+        }
+      } else {
+        // Jika data sudah berupa objek
+        jawabanAI = data.answer || data.message || JSON.stringify(data);
+      }
+    }
+
+    if (!jawabanAI || jawabanAI === "{}") {
+      jawabanAI =
+        "Maaf, AI memberikan respon kosong. Coba cek Logs di Dashboard Supabase.";
+    }
+
+    document.getElementById(loadingId).innerText = jawabanAI;
+  } catch (err) {
+    console.error("Detail Error:", err);
+    document.getElementById(loadingId).innerText =
+      "Terjadi kesalahan: " + err.message;
+  }
+  body.scrollTop = body.scrollHeight;
+}

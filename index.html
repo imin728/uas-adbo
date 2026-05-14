@@ -670,6 +670,44 @@
       Kementerian Agama Provinsi Gorontalo
     </div>
 
+    <div id="ai-widget">
+      <button id="chat-open-btn" onclick="toggleChat()">
+        <span style="font-size: 24px">💬</span>
+      </button>
+
+      <div id="chat-container" style="display: none">
+        <div class="chat-header">
+          <strong>Asisten AI PTSP Kemenag</strong>
+          <button
+            onclick="toggleChat()"
+            style="
+              background: none;
+              border: none;
+              color: white;
+              cursor: pointer;
+            "
+          >
+            ✖
+          </button>
+        </div>
+        <div id="chat-body">
+          <div class="bot-msg">
+            Halo! Ada yang bisa saya bantu terkait layanan di PTSP Kemenag
+            Gorontalo?
+          </div>
+        </div>
+        <div class="chat-footer">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Ketik pesan..."
+            onkeypress="checkEnter(event)"
+          />
+          <button onclick="kirimPesanAI()" id="send-btn">Kirim</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
   </body>
