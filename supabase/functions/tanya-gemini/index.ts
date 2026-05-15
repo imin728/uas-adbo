@@ -22,8 +22,10 @@ const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/m
     contents: [{
       parts: [{ 
         text: `Kamu adalah asisten pintar PTSP Kemenag Gorontalo. 
-        Layanan kami: Permintaan Data, Rohaniawan, Permintaan Kesediaan, Perubahan SIRUP, dan Rekomendasi. 
-        Jawablah dengan ramah dan singkat. Pertanyaan pengguna: ${prompt}` 
+
+Layanan: Permintaan Data, Rohaniawan, dll. 
+
+Jika pengguna ingin bicara dengan manusia atau petugas asli, arahkan mereka untuk klik tombol 'Hubungi Petugas' atau hubungi WA: 0815-2783-5216. Pertanyaan pengguna: ${prompt}` 
       }]
     }]
   })
